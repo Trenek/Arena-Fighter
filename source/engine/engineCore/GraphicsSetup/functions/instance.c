@@ -93,14 +93,13 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 static const char **getRequiredExtensions(uint32_t *extensionCount) {
     const char **glfwExtensions = glfwGetRequiredInstanceExtensions(extensionCount);
 
-    uint32_t newSize = *extensionCount + (enableValidationLayers ? 2 : 1);
+    uint32_t newSize = *extensionCount + (enableValidationLayers ? 1 : 0);
     
     const char **extensions = malloc(sizeof(const char *) * newSize);
     memcpy(extensions, glfwExtensions, sizeof(const char *) * *extensionCount);
-    extensions[*extensionCount] = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME; // macos Hell
     
     if (enableValidationLayers) {
-        extensions[*extensionCount + 1] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME; // not sure how it works
+        extensions[*extensionCount] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME; // not sure how it works
     }
     
     *extensionCount = newSize;
@@ -145,7 +144,7 @@ VkInstance createInstance([[maybe_unused]] VkDebugUtilsMessengerEXT *debugMessen
     VkInstanceCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pNext = enableValidationLayers ? &debugCreateInfo : NULL,
-        .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+        .flags = 0,
         .pApplicationInfo = &appInfo,
         .enabledLayerCount = enableValidationLayers ? validationLayersCount : 0,
         .ppEnabledLayerNames = enableValidationLayers ? validationLayers : NULL,
