@@ -21,7 +21,7 @@ void cleanupAnim(void *toCleanArg) {
     }
 }
 
-struct Entity *createModel(struct ModelBuilder builder, struct GraphicsSetup *vulkan) {
+struct Entity *createModel(struct ModelBuilder builder, struct GraphicsSetup *graphics) {
     VkBuffer (*buff[])[MAX_FRAMES_IN_FLIGHT] = {
         &builder.modelData->localMesh.buffers,
         NULL
@@ -47,8 +47,8 @@ struct Entity *createModel(struct ModelBuilder builder, struct GraphicsSetup *vu
     if (builder.modelData->qAnim) {
         anim = malloc(sizeof(struct toCleanup));
 
-        anim->device = vulkan->device;
-        createBuffers(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, range[1], anim->anim.buffers, anim->anim.buffersMemory, anim->anim.buffersMapped, vulkan->device, vulkan->physicalDevice, vulkan->surface);
+        anim->device = graphics->device;
+        createBuffers(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, range[1], anim->anim.buffers, anim->anim.buffersMemory, anim->anim.buffersMapped, graphics->device, graphics->physicalDevice, graphics->surface);
 
         for (size_t j = 0; j < MAX_FRAMES_IN_FLIGHT; j += 1) {
             for (size_t i = 0; i < builder.modelData->qJoint; i += 1) {
@@ -81,5 +81,5 @@ struct Entity *createModel(struct ModelBuilder builder, struct GraphicsSetup *vu
 
         .additional = anim,
         .cleanup = cleanupAnim,
-    }, vulkan);
+    }, graphics);
 }

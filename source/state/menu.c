@@ -38,11 +38,15 @@ void menu(struct EngineCore *engine, enum state *state) {
     size_t qEntity = sizeof(entity) / sizeof(struct Entity *);
 
     struct ResourceManager *renderPassCoreData = findResource(&engine->resource, "RenderPassCoreData");
-    struct renderPassCore *clean = findResource(renderPassCoreData, "Clean");
+    struct renderPassCore *renderPassArr[] = { 
+        findResource(renderPassCoreData, "Clean"),
+        findResource(renderPassCoreData, "Stay")
+    };
+    size_t qRenderPassArr = sizeof(renderPassArr) / sizeof(struct renderPassCore *);
 
     struct renderPassObj *renderPass[] = {
         createRenderPassObj((struct renderPassBuilder){
-            .renderPass = clean,
+            .renderPass = renderPassArr[0],
             .coordinates = { 0.0, 0.0, 1.0, 1.0 },
             .data = (struct pipelineConnection[]) {
                 {
@@ -161,7 +165,7 @@ void menu(struct EngineCore *engine, enum state *state) {
 
         updateInstances(entity, qEntity, engine->deltaTime.deltaTime);
 
-        drawFrame(engine, qRenderPass, renderPass, 1, &clean);
+        drawFrame(engine, qRenderPass, renderPass, qRenderPassArr, renderPassArr);
         shadowButton(engine->graphics, engine->window, &button);
         if (button.isClicked) {
             *state = button.newState[button.chosen];

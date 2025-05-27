@@ -7,13 +7,13 @@ VkFramebuffer *createFramebuffers(VkDevice device, VkImageView *swapChainImageVi
 void destroyFramebuffers(VkDevice device, VkFramebuffer *swapChainFramebuffers, uint32_t swapChainImagesCount);
 VkRenderPass createRenderPass(VkDevice device, VkPhysicalDevice physicalDevice, VkFormat swapChainImageFormat, VkSampleCountFlagBits msaaSamples, int loadOp, int initLayout);
 
-struct renderPassCore *createRenderPassCore(struct renderPassCoreBuilder builder, struct GraphicsSetup *vulkan) {
+struct renderPassCore *createRenderPassCore(struct renderPassCoreBuilder builder, struct GraphicsSetup *graphics) {
     struct renderPassCore *result = malloc(sizeof(struct renderPassCore));
 
-    result->device = vulkan->device;
-    result->swapChain = &vulkan->swapChain;
-    result->renderPass = createRenderPass(vulkan->device, vulkan->physicalDevice, vulkan->swapChain.imageFormat, vulkan->msaaSamples, builder.loadOp, builder.initLayout);
-    result->swapChainFramebuffers = createFramebuffers(vulkan->device, vulkan->swapChainImageViews, vulkan->swapChain.imagesCount, vulkan->swapChain.extent, result->renderPass, vulkan->depthImageView, vulkan->colorImageView);
+    result->device = graphics->device;
+    result->swapChain = &graphics->swapChain;
+    result->renderPass = createRenderPass(graphics->device, graphics->physicalDevice, graphics->swapChain.imageFormat, graphics->msaaSamples, builder.loadOp, builder.initLayout);
+    result->swapChainFramebuffers = createFramebuffers(graphics->device, graphics->swapChainImageViews, graphics->swapChain.imagesCount, graphics->swapChain.extent, result->renderPass, graphics->depthImageView, graphics->colorImageView);
 
     return result;
 }
@@ -27,8 +27,8 @@ void freeRenderPassCore(void *thisPtr) {
     free(this);
 }
 
-void recreateRenderPassCore(struct renderPassCore *this, struct GraphicsSetup *vulkan) {
+void recreateRenderPassCore(struct renderPassCore *this, struct GraphicsSetup *graphics) {
     destroyFramebuffers(this->device, this->swapChainFramebuffers, this->swapChain->imagesCount);
 
-    this->swapChainFramebuffers = createFramebuffers(vulkan->device, vulkan->swapChainImageViews, vulkan->swapChain.imagesCount, vulkan->swapChain.extent, this->renderPass, vulkan->depthImageView, vulkan->colorImageView);
+    this->swapChainFramebuffers = createFramebuffers(graphics->device, graphics->swapChainImageViews, graphics->swapChain.imagesCount, graphics->swapChain.extent, this->renderPass, graphics->depthImageView, graphics->colorImageView);
 }

@@ -48,7 +48,7 @@ struct renderPassObj {
     VkDescriptorSet cameraDescriptorSet[MAX_FRAMES_IN_FLIGHT];
 };
 
-struct renderPassObj *createRenderPassObj(struct renderPassBuilder builder, struct GraphicsSetup *vulkan);
+struct renderPassObj *createRenderPassObj(struct renderPassBuilder builder, struct GraphicsSetup *graphics);
 void destroyRenderPassObj(void *renderPassPtr);
 void destroyRenderPassObjArr(size_t qRenderPass, struct renderPassObj **renderPass);
 

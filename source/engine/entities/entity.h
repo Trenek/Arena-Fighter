@@ -6,7 +6,6 @@
 #include "descriptor.h"
 #include "buffer.h"
 #include "entityBuilder.h"
-#include "vulkan/vulkan_core.h"
 
 struct Entity {
     VkDevice device;
@@ -35,7 +34,7 @@ struct Entity {
 struct GraphicsSetup;
 struct EntityBuilder;
 
-struct Entity *createEntity(struct EntityBuilder modelBuilder, struct GraphicsSetup *vulkan);
+struct Entity *createEntity(struct EntityBuilder modelBuilder, struct GraphicsSetup *graphics);
 void destroyEntity(void *modelPtr);
 void destroyEntityArray(uint16_t num, struct Entity *modelArray[num], struct GraphicsSetup *graphics);
 

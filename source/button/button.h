@@ -5,7 +5,7 @@ struct Button {
     struct Entity *entity;
     struct actualModel *model;
     struct CameraBuffer *camera;
-    int (*newState);
+    int *newState;
 
     int chosen;
 };

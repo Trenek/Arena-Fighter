@@ -20,9 +20,9 @@ struct renderPassCore {
     VkFramebuffer *swapChainFramebuffers;
 };
 
-struct renderPassCore *createRenderPassCore(struct renderPassCoreBuilder builder, struct GraphicsSetup *vulkan);
+struct renderPassCore *createRenderPassCore(struct renderPassCoreBuilder builder, struct GraphicsSetup *graphics);
 void freeRenderPassCore(void *thisPtr);
 
-void recreateRenderPassCore(struct renderPassCore *this, struct GraphicsSetup *vulkan);
+void recreateRenderPassCore(struct renderPassCore *this, struct GraphicsSetup *graphics);
 
 #endif

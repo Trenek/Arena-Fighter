@@ -17,23 +17,23 @@ static struct Data loadCubeMap(const char *texturePath[6], VkDevice device, VkPh
     return result;
 }
 
-struct Textures *loadCubeMaps(struct GraphicsSetup *vulkan, const char *texturePath[6]) {
+struct Textures *loadCubeMaps(struct GraphicsSetup *graphics, const char *texturePath[6]) {
     struct Textures *texture = calloc(1, sizeof(struct Textures));
     *texture = (struct Textures){
-        .device = &vulkan->device,
+        .device = &graphics->device,
         .data = calloc(1, sizeof(struct Data)),
         .quantity = 1,
         .descriptor = {
-            .descriptorSetLayout = createTextureDescriptorSetLayout(vulkan->device, 1),
-            .descriptorPool = createTextureDescriptorPool(vulkan->device, 1)
+            .descriptorSetLayout = createTextureDescriptorSetLayout(graphics->device, 1),
+            .descriptorPool = createTextureDescriptorPool(graphics->device, 1)
         }
     };
     struct descriptor *desc = &texture->descriptor;
 
-    texture->data[0] = loadCubeMap(texturePath, vulkan->device, vulkan->physicalDevice, vulkan->surface, vulkan->commandPool, vulkan->transferQueue);
+    texture->data[0] = loadCubeMap(texturePath, graphics->device, graphics->physicalDevice, graphics->surface, graphics->commandPool, graphics->transferQueue);
 
-    createDescriptorSets(desc->descriptorSets, vulkan->device, desc->descriptorPool, desc->descriptorSetLayout);
-    bindTextureBuffersToDescriptorSets(desc->descriptorSets, vulkan->device, 1, texture);
+    createDescriptorSets(desc->descriptorSets, graphics->device, desc->descriptorPool, desc->descriptorSetLayout);
+    bindTextureBuffersToDescriptorSets(desc->descriptorSets, graphics->device, 1, texture);
 
     return texture;
 }
@@ -48,25 +48,25 @@ static struct Data loadTexture(const char *texturePath, VkDevice device, VkPhysi
     return result;
 }
 
-struct Textures *loadTextures(struct GraphicsSetup *vulkan, uint32_t texturesQuantity, const char *texturePath[static texturesQuantity]) {
+struct Textures *loadTextures(struct GraphicsSetup *graphics, uint32_t texturesQuantity, const char *texturePath[static texturesQuantity]) {
     struct Textures *texture = calloc(1, sizeof(struct Textures));
     *texture = (struct Textures) {
-        .device = &vulkan->device,
+        .device = &graphics->device,
         .data = calloc(texturesQuantity, sizeof(struct Data)),
         .quantity = texturesQuantity,
         .descriptor = {
-            .descriptorSetLayout = createTextureDescriptorSetLayout(vulkan->device, texturesQuantity),
-            .descriptorPool = createTextureDescriptorPool(vulkan->device, texturesQuantity)
+            .descriptorSetLayout = createTextureDescriptorSetLayout(graphics->device, texturesQuantity),
+            .descriptorPool = createTextureDescriptorPool(graphics->device, texturesQuantity)
         }
     };
     struct descriptor *desc = &texture->descriptor;
 
     for (uint32_t i = 0; i < texturesQuantity; i += 1) {
-        texture->data[i] = loadTexture(texturePath[i], vulkan->device, vulkan->physicalDevice, vulkan->surface, vulkan->commandPool, vulkan->transferQueue);
+        texture->data[i] = loadTexture(texturePath[i], graphics->device, graphics->physicalDevice, graphics->surface, graphics->commandPool, graphics->transferQueue);
     }
 
-    createDescriptorSets(desc->descriptorSets, vulkan->device, desc->descriptorPool, desc->descriptorSetLayout);
-    bindTextureBuffersToDescriptorSets(desc->descriptorSets, vulkan->device, texturesQuantity, texture);
+    createDescriptorSets(desc->descriptorSets, graphics->device, desc->descriptorPool, desc->descriptorSetLayout);
+    bindTextureBuffersToDescriptorSets(desc->descriptorSets, graphics->device, texturesQuantity, texture);
 
     return texture;
 }

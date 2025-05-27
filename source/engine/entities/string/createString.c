@@ -45,14 +45,14 @@ void cleanupFont(void *toCleanArg) {
     free(toClean);
 }
 
-struct Entity *createString(struct StringBuilder builder, struct GraphicsSetup *vulkan) {
+struct Entity *createString(struct StringBuilder builder, struct GraphicsSetup *graphics) {
     uint32_t meshQuantity = count(builder.string);
 
     struct toCleanup *info = malloc(sizeof(struct toCleanup));
-    info->device = vulkan->device;
+    info->device = graphics->device;
     info->mesh = malloc(sizeof(struct Mesh) * meshQuantity);
 
-    createBuffers(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, meshQuantity * sizeof(mat4), info->localMesh.buffers, info->localMesh.buffersMemory, info->localMesh.buffersMapped, vulkan->device, vulkan->physicalDevice, vulkan->surface);
+    createBuffers(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, meshQuantity * sizeof(mat4), info->localMesh.buffers, info->localMesh.buffersMemory, info->localMesh.buffersMapped, graphics->device, graphics->physicalDevice, graphics->surface);
 
     mat4 **thisBuffer = (void *)info->localMesh.buffersMapped;
     mat4 **transform = (void *)builder.modelData->localMesh.buffersMapped;
@@ -133,5 +133,5 @@ struct Entity *createString(struct StringBuilder builder, struct GraphicsSetup *
 
         .additional = info,
         .cleanup = cleanupFont
-    }, vulkan);
+    }, graphics);
 }

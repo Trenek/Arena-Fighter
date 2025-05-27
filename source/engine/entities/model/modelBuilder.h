@@ -19,6 +19,6 @@ struct ModelBuilder {
     VkDescriptorSetLayout objectLayout;
 };
 
-struct Entity *createModel(struct ModelBuilder builder, struct GraphicsSetup *vulkan);
+struct Entity *createModel(struct ModelBuilder builder, struct GraphicsSetup *graphics);
 
 #endif

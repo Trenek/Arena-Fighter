@@ -54,5 +54,4 @@ enum animation {
 
 struct WindowManager;
 void movePlayer(struct player *p, struct WindowManager *wc, float deltaTime, enum state *state);
-void moveEnemy(struct player *p, struct WindowManager *, float deltaTime);
 void posePlayer(struct player *p, float deltaTime);

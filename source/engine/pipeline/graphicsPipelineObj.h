@@ -45,7 +45,7 @@ struct graphicsPipeline {
     struct renderPipeline *pipeline;
 };
 
-struct graphicsPipeline *createObjGraphicsPipeline(struct graphicsPipelineBuilder builder, struct GraphicsSetup *vulkan);
+struct graphicsPipeline *createObjGraphicsPipeline(struct graphicsPipelineBuilder builder, struct GraphicsSetup *graphics);
 void destroyObjGraphicsPipeline(void *pipePtr);
 
 #endif

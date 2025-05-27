@@ -19,10 +19,10 @@ struct EngineCore {
 };
 
 struct EngineCore setup();
-void recreateSwapChain(struct EngineCore *vulkan, uint16_t qRenderPassCore, struct renderPassCore **renderPassCore);
-void cleanup(struct EngineCore vulkan);
+void recreateSwapChain(struct EngineCore *engine, uint16_t qRenderPassCore, struct renderPassCore **renderPassCore);
+void cleanup(struct EngineCore engine);
 
 struct renderPassObj;
-void drawFrame(struct EngineCore *vulkan, uint16_t qRenderPass, struct renderPassObj **renderPass, uint16_t qRenderPassCore, struct renderPassCore **renderPassCore);
+void drawFrame(struct EngineCore *engine, uint16_t qRenderPass, struct renderPassObj **renderPass, uint16_t qRenderPassCore, struct renderPassCore **renderPassCore);
 
 #endif

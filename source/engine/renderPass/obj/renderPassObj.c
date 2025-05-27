@@ -12,15 +12,15 @@
 #include "cameraBufferObject.h"
 #include "graphicsPipelineObj.h"
 
-struct renderPassObj *createRenderPassObj(struct renderPassBuilder builder, struct GraphicsSetup *vulkan) {
+struct renderPassObj *createRenderPassObj(struct renderPassBuilder builder, struct GraphicsSetup *graphics) {
     struct renderPassObj *result = calloc(1, sizeof(struct renderPassObj));
     *result = (struct renderPassObj){
-        .device = vulkan->device,
+        .device = graphics->device,
         .renderPass = builder.renderPass,
         .data = malloc(sizeof(struct pipelineConnection) * builder.qData),
         .qData = builder.qData,
-        .cameraDescriptorPool = createCameraDescriptorPool(vulkan->device),
-        .cameraDescriptorSetLayout = createCameraDescriptorSetLayout(vulkan->device),
+        .cameraDescriptorPool = createCameraDescriptorPool(graphics->device),
+        .cameraDescriptorSetLayout = createCameraDescriptorSetLayout(graphics->device),
         .updateCameraBuffer = builder.updateCameraBuffer
     };
 
@@ -33,10 +33,10 @@ struct renderPassObj *createRenderPassObj(struct renderPassBuilder builder, stru
     }
     memcpy(result->coordinates, builder.coordinates, sizeof(double[4]));
 
-    createBuffers(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(struct CameraBuffer), result->cameraBuffer, result->cameraBufferMemory, result->cameraBufferMapped, vulkan->device, vulkan->physicalDevice, vulkan->surface);
+    createBuffers(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(struct CameraBuffer), result->cameraBuffer, result->cameraBufferMemory, result->cameraBufferMapped, graphics->device, graphics->physicalDevice, graphics->surface);
 
-    createDescriptorSets(result->cameraDescriptorSet, vulkan->device, result->cameraDescriptorPool, result->cameraDescriptorSetLayout);
-    bindCameraBuffersToDescriptorSets(result->cameraDescriptorSet, vulkan->device, result->cameraBuffer);
+    createDescriptorSets(result->cameraDescriptorSet, graphics->device, result->cameraDescriptorPool, result->cameraDescriptorSetLayout);
+    bindCameraBuffersToDescriptorSets(result->cameraDescriptorSet, graphics->device, result->cameraBuffer);
 
     return result;
 }

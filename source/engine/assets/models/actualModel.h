@@ -36,6 +36,7 @@ struct jointData {
 
     mat4 inverseMatrix;
     int16_t father;
+
     int16_t isJoint;
 };
 
@@ -65,8 +66,5 @@ struct actualModel {
     struct colisionBox *hurtBox;
 };
 
-struct actualModel *loadModel(const char *filePath, struct GraphicsSetup *vulkan);
-void loadModels(size_t quantity, struct actualModel *model[quantity], const char *modelPath[quantity], struct GraphicsSetup *vulkan);
-
+struct actualModel *loadModel(const char *filePath, struct GraphicsSetup *graphics);
 void destroyActualModel(void *modelPtr);
-void destroyActualModels(uint32_t modelQuantity, struct actualModel *model[modelQuantity]);

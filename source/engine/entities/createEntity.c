@@ -6,11 +6,11 @@
 #include "entity.h"
 #include "entityBuilder.h"
 
-struct Entity *createEntity(struct EntityBuilder builder, struct GraphicsSetup *vulkan) {
+struct Entity *createEntity(struct EntityBuilder builder, struct GraphicsSetup *graphics) {
     struct Entity *result = calloc(1, sizeof(struct Entity));
 
     *result = (struct Entity){
-        .device = vulkan->device,
+        .device = graphics->device,
         .additional = builder.additional,
         .cleanup = builder.cleanup,
 
@@ -26,7 +26,7 @@ struct Entity *createEntity(struct EntityBuilder builder, struct GraphicsSetup *
         .mesh = builder.mesh,
         .bufferSize = builder.instanceBufferSize,
 
-        .object.descriptorPool = createObjectDescriptorPool(vulkan->device, builder.qBuff + 1),
+        .object.descriptorPool = createObjectDescriptorPool(graphics->device, builder.qBuff + 1),
         .qBuff = builder.qBuff + 1
     };
 
@@ -37,7 +37,7 @@ struct Entity *createEntity(struct EntityBuilder builder, struct GraphicsSetup *
 
     VkBuffer (*buff2[builder.qBuff + 1])[MAX_FRAMES_IN_FLIGHT];
 
-    createBuffers(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, builder.instanceCount * builder.instanceBufferSize, result->uniformModel.buffers, result->uniformModel.buffersMemory, result->uniformModel.buffersMapped, vulkan->device, vulkan->physicalDevice, vulkan->surface);
+    createBuffers(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, builder.instanceCount * builder.instanceBufferSize, result->uniformModel.buffers, result->uniformModel.buffersMemory, result->uniformModel.buffersMapped, graphics->device, graphics->physicalDevice, graphics->surface);
 
     result->mapp[0] = &result->uniformModel.buffersMapped;
     buff2[0] = &result->uniformModel.buffers;
@@ -48,9 +48,9 @@ struct Entity *createEntity(struct EntityBuilder builder, struct GraphicsSetup *
 
     memset(result->buffer[0], 0, builder.instanceBufferSize * builder.instanceCount);
 
-    createDescriptorSets(result->object.descriptorSets, vulkan->device, result->object.descriptorPool, builder.objectLayout);
+    createDescriptorSets(result->object.descriptorSets, graphics->device, result->object.descriptorPool, builder.objectLayout);
 
-    bindObjectBuffersToDescriptorSets(result->object.descriptorSets, vulkan->device, builder.qBuff + 1, buff2, result->range);
+    bindObjectBuffersToDescriptorSets(result->object.descriptorSets, graphics->device, builder.qBuff + 1, buff2, result->range);
 
     return result;
 }

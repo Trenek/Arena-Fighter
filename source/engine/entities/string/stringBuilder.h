@@ -19,6 +19,6 @@ struct StringBuilder {
     int center;
 };
 
-struct Entity *createString(struct StringBuilder builder, struct GraphicsSetup *vulkan);
+struct Entity *createString(struct StringBuilder builder, struct GraphicsSetup *graphics);
 
 #endif

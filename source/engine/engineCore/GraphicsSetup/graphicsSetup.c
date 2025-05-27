@@ -5,95 +5,95 @@
 
 #include "definitions.h"
 
-static void cleanupSwapChain(struct GraphicsSetup *vulkan) {
+static void cleanupSwapChain(struct GraphicsSetup *graphics) {
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i += 1) {
-        vkDestroySemaphore(vulkan->device, vulkan->imageAvailableSemaphore[i], NULL);
-        vkDestroySemaphore(vulkan->device, vulkan->renderFinishedSemaphore[i], NULL);
-        vkDestroyFence(vulkan->device, vulkan->inFlightFence[i], NULL);
+        vkDestroySemaphore(graphics->device, graphics->imageAvailableSemaphore[i], NULL);
+        vkDestroySemaphore(graphics->device, graphics->renderFinishedSemaphore[i], NULL);
+        vkDestroyFence(graphics->device, graphics->inFlightFence[i], NULL);
     }
 
-    vkDestroyImageView(vulkan->device, vulkan->colorImageView, NULL);
-    vkDestroyImage(vulkan->device, vulkan->colorImage, NULL);
-    vkFreeMemory(vulkan->device, vulkan->colorImageMemory, NULL);
+    vkDestroyImageView(graphics->device, graphics->colorImageView, NULL);
+    vkDestroyImage(graphics->device, graphics->colorImage, NULL);
+    vkFreeMemory(graphics->device, graphics->colorImageMemory, NULL);
 
-    vkDestroyImageView(vulkan->device, vulkan->depthImageView, NULL);
-    vkDestroyImage(vulkan->device, vulkan->depthImage, NULL);
-    vkFreeMemory(vulkan->device, vulkan->depthImageMemory, NULL);
+    vkDestroyImageView(graphics->device, graphics->depthImageView, NULL);
+    vkDestroyImage(graphics->device, graphics->depthImage, NULL);
+    vkFreeMemory(graphics->device, graphics->depthImageMemory, NULL);
 
-    destroyImageViews(vulkan->swapChainImageViews, vulkan->swapChain.imagesCount, vulkan->device);
+    destroyImageViews(graphics->swapChainImageViews, graphics->swapChain.imagesCount, graphics->device);
 
-    vkDestroySwapchainKHR(vulkan->device, vulkan->swapChain.this, NULL);
+    vkDestroySwapchainKHR(graphics->device, graphics->swapChain.this, NULL);
 }
 
-void recreateSwapChainGraphics(GLFWwindow *window, struct GraphicsSetup *vulkan) {
-    vkDeviceWaitIdle(vulkan->device);
+void recreateSwapChainGraphics(GLFWwindow *window, struct GraphicsSetup *graphics) {
+    vkDeviceWaitIdle(graphics->device);
 
-    cleanupSwapChain(vulkan);
+    cleanupSwapChain(graphics);
 
-    vulkan->swapChain = createSwapChain(window, vulkan->surface, vulkan->physicalDevice, vulkan->device);
-    vulkan->swapChainImageViews = createImageViews(vulkan->device, vulkan->swapChain);
+    graphics->swapChain = createSwapChain(window, graphics->surface, graphics->physicalDevice, graphics->device);
+    graphics->swapChainImageViews = createImageViews(graphics->device, graphics->swapChain);
 
-    createColorResources(&vulkan->colorImage, &vulkan->colorImageMemory, &vulkan->colorImageView, vulkan->device, vulkan->physicalDevice, vulkan->swapChain.extent, vulkan->swapChain.imageFormat, vulkan->msaaSamples);
-    createDepthResources(&vulkan->depthImage, &vulkan->depthImageMemory, &vulkan->depthImageView, vulkan->device, vulkan->physicalDevice, vulkan->swapChain.extent, vulkan->msaaSamples, vulkan->transferCommandPool, vulkan->transferQueue);
+    createColorResources(&graphics->colorImage, &graphics->colorImageMemory, &graphics->colorImageView, graphics->device, graphics->physicalDevice, graphics->swapChain.extent, graphics->swapChain.imageFormat, graphics->msaaSamples);
+    createDepthResources(&graphics->depthImage, &graphics->depthImageMemory, &graphics->depthImageView, graphics->device, graphics->physicalDevice, graphics->swapChain.extent, graphics->msaaSamples, graphics->transferCommandPool, graphics->transferQueue);
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i += 1) {
-        vulkan->imageAvailableSemaphore[i] = createSemaphore(vulkan->device);
-        vulkan->renderFinishedSemaphore[i] = createSemaphore(vulkan->device);
-        vulkan->inFlightFence[i] = createFence(vulkan->device);
+        graphics->imageAvailableSemaphore[i] = createSemaphore(graphics->device);
+        graphics->renderFinishedSemaphore[i] = createSemaphore(graphics->device);
+        graphics->inFlightFence[i] = createFence(graphics->device);
     }
 }
 
 struct GraphicsSetup setupGraphics(GLFWwindow *window) {
-    struct GraphicsSetup vulkan = { 0 };
+    struct GraphicsSetup graphics = { 0 };
 
-    vulkan.instance = createInstance(&vulkan.debugMessenger);
-    vulkan.surface = createSurface(window, vulkan.instance);
-    vulkan.physicalDevice = pickPhysicalDevice(&vulkan.msaaSamples, vulkan.instance, vulkan.surface);
-    vulkan.device = createLogicalDevice(vulkan.surface, vulkan.physicalDevice, &vulkan.graphicsQueue, &vulkan.presentQueue, &vulkan.transferQueue);
-    vulkan.swapChain = createSwapChain(window, vulkan.surface, vulkan.physicalDevice, vulkan.device);
-    vulkan.swapChainImageViews = createImageViews(vulkan.device, vulkan.swapChain);
+    graphics.instance = createInstance(&graphics.debugMessenger);
+    graphics.surface = createSurface(window, graphics.instance);
+    graphics.physicalDevice = pickPhysicalDevice(&graphics.msaaSamples, graphics.instance, graphics.surface);
+    graphics.device = createLogicalDevice(graphics.surface, graphics.physicalDevice, &graphics.graphicsQueue, &graphics.presentQueue, &graphics.transferQueue);
+    graphics.swapChain = createSwapChain(window, graphics.surface, graphics.physicalDevice, graphics.device);
+    graphics.swapChainImageViews = createImageViews(graphics.device, graphics.swapChain);
 
-    vulkan.commandPool = createCommandPool(vulkan.device, vulkan.physicalDevice, vulkan.surface);
-    createCommandBuffer(vulkan.commandBuffer, vulkan.device, vulkan.commandPool);
+    graphics.commandPool = createCommandPool(graphics.device, graphics.physicalDevice, graphics.surface);
+    createCommandBuffer(graphics.commandBuffer, graphics.device, graphics.commandPool);
 
-    vulkan.transferCommandPool = createTransferCommandPool(vulkan.device, vulkan.physicalDevice, vulkan.surface);
+    graphics.transferCommandPool = createTransferCommandPool(graphics.device, graphics.physicalDevice, graphics.surface);
 
-    createColorResources(&vulkan.colorImage, &vulkan.colorImageMemory, &vulkan.colorImageView, vulkan.device, vulkan.physicalDevice, vulkan.swapChain.extent, vulkan.swapChain.imageFormat, vulkan.msaaSamples);
-    createDepthResources(&vulkan.depthImage, &vulkan.depthImageMemory, &vulkan.depthImageView, vulkan.device, vulkan.physicalDevice, vulkan.swapChain.extent, vulkan.msaaSamples, vulkan.transferCommandPool, vulkan.transferQueue);
+    createColorResources(&graphics.colorImage, &graphics.colorImageMemory, &graphics.colorImageView, graphics.device, graphics.physicalDevice, graphics.swapChain.extent, graphics.swapChain.imageFormat, graphics.msaaSamples);
+    createDepthResources(&graphics.depthImage, &graphics.depthImageMemory, &graphics.depthImageView, graphics.device, graphics.physicalDevice, graphics.swapChain.extent, graphics.msaaSamples, graphics.transferCommandPool, graphics.transferQueue);
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i += 1) {
-        vulkan.imageAvailableSemaphore[i] = createSemaphore(vulkan.device);
-        vulkan.renderFinishedSemaphore[i] = createSemaphore(vulkan.device);
-        vulkan.inFlightFence[i] = createFence(vulkan.device);
+        graphics.imageAvailableSemaphore[i] = createSemaphore(graphics.device);
+        graphics.renderFinishedSemaphore[i] = createSemaphore(graphics.device);
+        graphics.inFlightFence[i] = createFence(graphics.device);
     }
 
-    return vulkan;
+    return graphics;
 }
 
-void cleanupGraphics(struct GraphicsSetup vulkan) {
-    vkDeviceWaitIdle(vulkan.device);
+void cleanupGraphics(struct GraphicsSetup graphics) {
+    vkDeviceWaitIdle(graphics.device);
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i += 1) {
-        vkDestroySemaphore(vulkan.device, vulkan.imageAvailableSemaphore[i], NULL);
-        vkDestroySemaphore(vulkan.device, vulkan.renderFinishedSemaphore[i], NULL);
-        vkDestroyFence(vulkan.device, vulkan.inFlightFence[i], NULL);
+        vkDestroySemaphore(graphics.device, graphics.imageAvailableSemaphore[i], NULL);
+        vkDestroySemaphore(graphics.device, graphics.renderFinishedSemaphore[i], NULL);
+        vkDestroyFence(graphics.device, graphics.inFlightFence[i], NULL);
     }
 
-    vkDestroyImageView(vulkan.device, vulkan.colorImageView, NULL);
-    vkDestroyImage(vulkan.device, vulkan.colorImage, NULL);
-    vkFreeMemory(vulkan.device, vulkan.colorImageMemory, NULL);
+    vkDestroyImageView(graphics.device, graphics.colorImageView, NULL);
+    vkDestroyImage(graphics.device, graphics.colorImage, NULL);
+    vkFreeMemory(graphics.device, graphics.colorImageMemory, NULL);
 
-    vkDestroyImageView(vulkan.device, vulkan.depthImageView, NULL);
-    vkDestroyImage(vulkan.device, vulkan.depthImage, NULL);
-    vkFreeMemory(vulkan.device, vulkan.depthImageMemory, NULL);
+    vkDestroyImageView(graphics.device, graphics.depthImageView, NULL);
+    vkDestroyImage(graphics.device, graphics.depthImage, NULL);
+    vkFreeMemory(graphics.device, graphics.depthImageMemory, NULL);
 
-    vkDestroyCommandPool(vulkan.device, vulkan.commandPool, NULL);
-    vkDestroyCommandPool(vulkan.device, vulkan.transferCommandPool, NULL);
+    vkDestroyCommandPool(graphics.device, graphics.commandPool, NULL);
+    vkDestroyCommandPool(graphics.device, graphics.transferCommandPool, NULL);
 
-    destroyImageViews(vulkan.swapChainImageViews, vulkan.swapChain.imagesCount, vulkan.device);
-    freeSwapChain(vulkan.device, &vulkan.swapChain);
-    vkDestroyDevice(vulkan.device, NULL);
-    DestroyDebugUtilsMessengerEXT(vulkan.instance, vulkan.debugMessenger, NULL);
-    vkDestroySurfaceKHR(vulkan.instance, vulkan.surface, NULL);
-    vkDestroyInstance(vulkan.instance, NULL);
+    destroyImageViews(graphics.swapChainImageViews, graphics.swapChain.imagesCount, graphics.device);
+    freeSwapChain(graphics.device, &graphics.swapChain);
+    vkDestroyDevice(graphics.device, NULL);
+    DestroyDebugUtilsMessengerEXT(graphics.instance, graphics.debugMessenger, NULL);
+    vkDestroySurfaceKHR(graphics.instance, graphics.surface, NULL);
+    vkDestroyInstance(graphics.instance, NULL);
 }

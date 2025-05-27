@@ -8,7 +8,7 @@
 
 #include "MY_ASSERT.h"
 
-struct actualModel *loadModel(const char *filePath, struct GraphicsSetup *vulkan) {
+struct actualModel *loadModel(const char *filePath, struct GraphicsSetup *graphics) {
     struct actualModel *result = calloc(1, sizeof(struct actualModel));
 
     void (*fun)(const char *, struct actualModel *, VkDevice, VkPhysicalDevice, VkSurfaceKHR) =
@@ -19,21 +19,15 @@ struct actualModel *loadModel(const char *filePath, struct GraphicsSetup *vulkan
         NULL;
     assert(NULL != fun);
 
-    fun(filePath, result, vulkan->device, vulkan->physicalDevice, vulkan->surface);
+    fun(filePath, result, graphics->device, graphics->physicalDevice, graphics->surface);
 
     for (uint32_t i = 0; i < result->meshQuantity; i += 1) {
-        result->device = vulkan->device;
-        result->mesh[i].vertexBuffer = createVertexBuffer(&result->mesh[i].vertexBufferMemory, vulkan->device, vulkan->physicalDevice, vulkan->surface, vulkan->commandPool, vulkan->transferQueue, result->mesh[i].verticesQuantity, result->mesh[i].vertices, result->mesh[i].sizeOfVertex);
-        result->mesh[i].indexBuffer = createIndexBuffer(&result->mesh[i].indexBufferMemory, vulkan->device, vulkan->physicalDevice, vulkan->surface, vulkan->commandPool, vulkan->transferQueue, result->mesh[i].verticesQuantity, result->mesh[i].indicesQuantity, result->mesh[i].indices, result->mesh[i].sizeOfVertex);
+        result->device = graphics->device;
+        result->mesh[i].vertexBuffer = createVertexBuffer(&result->mesh[i].vertexBufferMemory, graphics->device, graphics->physicalDevice, graphics->surface, graphics->commandPool, graphics->transferQueue, result->mesh[i].verticesQuantity, result->mesh[i].vertices, result->mesh[i].sizeOfVertex);
+        result->mesh[i].indexBuffer = createIndexBuffer(&result->mesh[i].indexBufferMemory, graphics->device, graphics->physicalDevice, graphics->surface, graphics->commandPool, graphics->transferQueue, result->mesh[i].verticesQuantity, result->mesh[i].indicesQuantity, result->mesh[i].indices, result->mesh[i].sizeOfVertex);
     }
 
     return result;
-}
-
-void loadModels(size_t quantity, struct actualModel *model[quantity], const char *modelPath[quantity], struct GraphicsSetup *vulkan) {
-    for (size_t i = 0; i < quantity; i += 1) {
-        model[i] = loadModel(modelPath[i], vulkan);
-    }
 }
 
 void freeTransformation(struct timeFrame transformation) {
@@ -86,10 +80,4 @@ void destroyActualModel(void *modelPtr) {
     destroyBuffers(model->device, model->localMesh.buffers, model->localMesh.buffersMemory);
 
     free(model);
-}
-
-void destroyActualModels(uint32_t modelQuantity, struct actualModel *model[modelQuantity]) {
-    for (uint32_t i = 0; i < modelQuantity; i += 1) {
-        destroyActualModel(model[i]);
-    }
 }

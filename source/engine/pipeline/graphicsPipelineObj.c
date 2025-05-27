@@ -8,7 +8,7 @@
 
 #include "descriptor.h"
 
-struct graphicsPipeline *createObjGraphicsPipeline(struct graphicsPipelineBuilder builder, struct GraphicsSetup *vulkan) {
+struct graphicsPipeline *createObjGraphicsPipeline(struct graphicsPipelineBuilder builder, struct GraphicsSetup *graphics) {
     VkDescriptorSetLayout descriptorSetLayout[] = {
         builder.objectLayout,
         builder.texture->descriptorSetLayout,
@@ -16,27 +16,27 @@ struct graphicsPipeline *createObjGraphicsPipeline(struct graphicsPipelineBuilde
     };
     size_t qDescriptorSetLayout = sizeof(descriptorSetLayout) / sizeof(VkDescriptorSetLayout);
 
-    struct graphicsPipeline *graphics = calloc(1, sizeof(struct graphicsPipeline)); 
-    *graphics = (struct graphicsPipeline) {
-        .device = vulkan->device,
+    struct graphicsPipeline *graphicsPipe = calloc(1, sizeof(struct graphicsPipeline)); 
+    *graphicsPipe = (struct graphicsPipeline) {
+        .device = graphics->device,
         .texture = builder.texture,
-        .pipelineLayout = createPipelineLayout(vulkan->device, qDescriptorSetLayout, descriptorSetLayout)
+        .pipelineLayout = createPipelineLayout(graphics->device, qDescriptorSetLayout, descriptorSetLayout)
     };
 
-    graphics->qPipelines = builder.qRenderPassCore;
-    graphics->pipeline = malloc(sizeof(struct renderPipeline) * graphics->qPipelines);
-    for (size_t i = 0; i < graphics->qPipelines; i += 1) {
-        graphics->pipeline[i].pipeline = createGraphicsPipeline(
+    graphicsPipe->qPipelines = builder.qRenderPassCore;
+    graphicsPipe->pipeline = malloc(sizeof(struct renderPipeline) * graphicsPipe->qPipelines);
+    for (size_t i = 0; i < graphicsPipe->qPipelines; i += 1) {
+        graphicsPipe->pipeline[i].pipeline = createGraphicsPipeline(
             builder, 
-            vulkan->device, 
+            graphics->device, 
             builder.renderPassCore[i]->renderPass, 
-            graphics->pipelineLayout, 
-            vulkan->msaaSamples
+            graphicsPipe->pipelineLayout, 
+            graphics->msaaSamples
         );
-        graphics->pipeline[i].core = builder.renderPassCore[i];
+        graphicsPipe->pipeline[i].core = builder.renderPassCore[i];
     }
 
-    return graphics;
+    return graphicsPipe;
 }
 
 void destroyObjGraphicsPipeline(void *pipePtr) {
