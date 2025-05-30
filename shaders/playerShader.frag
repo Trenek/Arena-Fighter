@@ -18,17 +18,22 @@ float minmax(float minn, float maxx, float val) {
 }
 
 void main() {
-    float r = fragColor[0];
-    float g = fragColor[1];
-    float b = fragColor[2];
+    const float r = fragColor[0];
+    const float g = fragColor[1];
+    const float b = fragColor[2];
 
-    outColor = vec4(
+    const vec3 color = vec3(
         (r > 0.7 && g < 0.2) ? fragDressColor.xyz :
         (r > 0.7 && g > 0.4 && g < 0.5) ? fragSkinColor.xyz :
-        fragColor,
-    1.0);
+        fragColor
+    );
+    const vec3 lightColor = vec3(
+        100.0 / 256.0, 200.0 / 256.0, 255.0 / 256.0
+        //1.0, 1.0, 1.0
+    );
     
-    vec3 direction = vec3(-1, -1, 1);
-    float diff = minmax(0.1, 0.9, dot(fragNormal, direction));
-    outColor = diff * outColor;
+    const vec3 direction = vec3(-1, -1, 1);
+    const float diff = minmax(0.1, 0.9, dot(fragNormal, direction));
+
+    outColor = vec4((diff * lightColor) * color, 1.0);
 }
