@@ -48,8 +48,8 @@ static void addModelData(struct EngineCore *this) {
     addResource(modelData, "font", loadModel("fonts/c.ttf", &this->graphics), destroyActualModel);
     addResource(modelData, "flat", loadModel("models/my_model2d.obj", &this->graphics), destroyActualModel);
     addResource(modelData, "skyBox", loadModel("models/my_skybox.obj", &this->graphics), destroyActualModel);
-    addResource(modelData, "floor", loadModel("models/my_floor.obj", &this->graphics), destroyActualModel);
-    addResource(modelData, "cube", loadModel("models/my_cube.obj", &this->graphics), destroyActualModel);
+    addResource(modelData, "floor", loadModel("models/my_floor.glb", &this->graphics), destroyActualModel);
+    addResource(modelData, "cube", loadModel("models/my_cube.glb", &this->graphics), destroyActualModel);
 
     addResource(&this->resource, "modelData", modelData, cleanupResources);
 }
