@@ -32,7 +32,8 @@ void main() {
         //1.0, 1.0, 1.0
     );
     
-    const vec3 direction = vec3(-1, -1, 1);
+    const vec3 center = vec3(0, 0, 3);
+    const vec3 direction = normalize(center - fragVert);
     const float diff = minmax(0.1, 0.9, dot(fragNormal, direction));
 
     outColor = vec4((diff * lightColor) * color, 1.0);

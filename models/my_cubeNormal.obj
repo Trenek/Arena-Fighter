@@ -14,9 +14,9 @@ vn -1.0 0.0 0.0
 vn 0.0 1.0 0.0
 vn 0.0 -1.0 0.0
 vt 0.0 0.0 # left lower
-vt 23.0 0.0 # right lower
-vt 0.0 3.0 # left upper
-vt 23.0 3.0 # right upper
+vt 1.0 0.0 # right lower
+vt 0.0 1.0 # left upper
+vt 1.0 1.0 # right upper
 vt 1.0 1.0 # upper
 # v/vt/vn
 f 2/2/1 1/1/1 3/1/1

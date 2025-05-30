@@ -59,12 +59,17 @@ void main() {
         mesh.localModel[PushConstants.meshID]
     );
 
-    fragVert = (gl_Position = (
+    fragVert = (
+        worldTransform *
+        position
+    ).xyz;
+
+    gl_Position = (
         ubo.proj * 
         ubo.view * 
         worldTransform *
         position
-    )).xyz;
+    );
 
     fragNormal = normalize(
         worldTransform *

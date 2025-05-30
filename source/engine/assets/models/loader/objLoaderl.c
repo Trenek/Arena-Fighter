@@ -150,6 +150,7 @@ void objLoadModel(const char *objectPath, struct actualModel *model, VkDevice de
     );
 
     float (*attribVertices)[3] = (float (*)[3])attrib.vertices;
+    float (*attribNormals)[3] = (float (*)[3])attrib.normals;
     float (*attribTexcoords)[2] = (float (*)[2])attrib.texcoords;
 
     model->meshQuantity = 1;
@@ -204,7 +205,12 @@ void objLoadModel(const char *objectPath, struct actualModel *model, VkDevice de
                 my_local_color[i % 8][2]
             }
             #else
-            .color = { 1.0f, 1.0f, 1.0f }
+            .color = { 1.0f, 1.0f, 1.0f },
+            .norm = {
+                attribNormals == NULL ? 0.0f : attribNormals[i][0],
+                attribNormals == NULL ? 0.0f : attribNormals[i][1],
+                attribNormals == NULL ? 0.0f : attribNormals[i][2],
+            }
             #endif
         };
     }
