@@ -73,6 +73,7 @@ static struct Mesh loadMesh(cgltf_mesh *mesh) {
     cgltf_accessor *vertex_accessor = getAccessor(cgltf_attribute_type_position, primitive);
     cgltf_accessor *texture_accessor = getAccessor(cgltf_attribute_type_texcoord, primitive);
     cgltf_accessor *color_accessor = getAccessor(cgltf_attribute_type_color, primitive);
+    cgltf_accessor *normal_accessor = getAccessor(cgltf_attribute_type_normal, primitive);
     cgltf_accessor *joint_accessor = getAccessor(cgltf_attribute_type_joints, primitive);
     cgltf_accessor *weight_accessor = getAccessor(cgltf_attribute_type_weights, primitive);
 
@@ -84,11 +85,13 @@ static struct Mesh loadMesh(cgltf_mesh *mesh) {
     float localPosition[result.verticesQuantity][3];
     float localTexture[result.verticesQuantity][2];
     float localColor[result.verticesQuantity][3];
+    float localNormal[result.verticesQuantity][3];
 
     loadFromAccessor(index_accessor, result.indices, sizeof(uint16_t), result.indicesQuantity);
     loadFromAccessor(vertex_accessor, localPosition, sizeof(float[3]), result.verticesQuantity);
     loadFromAccessor(texture_accessor, localTexture, sizeof(float[2]), result.verticesQuantity);
     loadFromAccessor(color_accessor, localColor, sizeof(float[3]), result.verticesQuantity);
+    loadFromAccessor(normal_accessor, localNormal, sizeof(float[3]), result.verticesQuantity);
 
     for (size_t i = 0; i < result.verticesQuantity; i += 1) {
         cgltf_uint joints[4] = {};
@@ -103,6 +106,11 @@ static struct Mesh loadMesh(cgltf_mesh *mesh) {
                 [0] = vertex_accessor == NULL ? 0.0f : localPosition[i][0],
                 [1] = vertex_accessor == NULL ? 0.0f : localPosition[i][1],
                 [2] = vertex_accessor == NULL ? 0.0f : localPosition[i][2]
+            },
+            .norm = {
+                [0] = normal_accessor == NULL ? 1.0f : localNormal[i][0],
+                [1] = normal_accessor == NULL ? 1.0f : localNormal[i][1],
+                [2] = normal_accessor == NULL ? 1.0f : localNormal[i][2],
             },
             .texCoord = {
                 [0] = texture_accessor == NULL ? 0.0f : localTexture[i][0],

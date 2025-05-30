@@ -113,7 +113,7 @@ static void addObjectLayout(struct EngineCore *this) {
                 .descriptorCount = 1,
                 .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
                 .pImmutableSamplers = NULL
-            }
+            },
         }), this->graphics.device), 
         destroyDescriptorSetLayout
     );
@@ -228,7 +228,7 @@ static void createGraphicPipelines(struct EngineCore *this) {
 
         Vert(AnimVertex),
         .operation = VK_COMPARE_OP_LESS,
-        .cullFlags = VK_CULL_MODE_NONE,
+        .cullFlags = VK_CULL_MODE_BACK_BIT,
 
         .cameraLayout = cameraLayout->descriptorSetLayout
     }, &this->graphics), destroyObjGraphicsPipeline);

@@ -45,6 +45,7 @@ struct AnimVertex {
     vec2 texCoord;
     int bone[4];
     vec4 weights;
+    vec3 norm;
 };
 
 [[maybe_unused]]
@@ -78,6 +79,12 @@ static VkVertexInputAttributeDescription AnimVertexAttributeDescriptions[] = {
         .location = 4,
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
         .offset = offsetof(struct AnimVertex, weights)
+    },
+    [5] = {
+        .binding = 0,
+        .location = 5,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(struct AnimVertex, norm)
     },
 };
 
