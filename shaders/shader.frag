@@ -21,13 +21,14 @@ void main() {
     vec3 color = texture(texSampler[fragTexIndex], fragTexCoord).rgb;
 
     const vec3 lightColor = vec3(
-        //100.0 / 256.0, 200.0 / 256.0, 255.0 / 256.0
-        1.0, 1.0, 1.0
+        100.0 / 256.0, 200.0 / 256.0, 255.0 / 256.0
+        //1.0, 1.0, 1.0
     );
     
     const vec3 center = vec3(0, 0, 3);
-    const vec3 direction = normalize(center - fragVertex);
-    const float diff = minmax(0.1, 0.9, dot(fragNormal, direction));
+    const vec3 direction = center - fragVertex;
+    const float nor = distance(center.xy, fragVertex.xy);
+    const float diff = minmax(0.1, 0.9, exp(-nor) * dot(fragNormal, direction));
 
     outColor = vec4((diff * lightColor) * color, 1.0);
 }

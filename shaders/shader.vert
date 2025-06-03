@@ -38,23 +38,24 @@ layout(push_constant) uniform constants {
 } PushConstants;
 
 void main() {
+    mat4 worldTransform = (
+        instance.objects[gl_InstanceIndex].model *
+        mesh.localModel[PushConstants.meshID]
+    );
+
     fragVertex = (
-        instance.objects[gl_InstanceIndex].model * 
-        mesh.localModel[PushConstants.meshID] * 
+        worldTransform *
         vec4(inPosition, 1.0)
     ).xyz;
 
     gl_Position = (
         ubo.proj *
         ubo.view *
-        instance.objects[gl_InstanceIndex].model *
-        mesh.localModel[PushConstants.meshID] *
-        vec4(inPosition, 1.0)
+        vec4(fragVertex, 1.0)
     );
 
     fragNormal = (
-        instance.objects[gl_InstanceIndex].model *
-        mesh.localModel[PushConstants.meshID] *
+        worldTransform *
         vec4(inNormal, 0.0)
     ).xyz;
 

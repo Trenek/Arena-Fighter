@@ -67,8 +67,7 @@ void main() {
     gl_Position = (
         ubo.proj * 
         ubo.view * 
-        worldTransform *
-        position
+        vec4(fragVert, 1.0)
     );
 
     fragNormal = normalize(
