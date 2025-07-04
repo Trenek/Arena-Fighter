@@ -150,6 +150,7 @@ void objLoadModel(const char *objectPath, struct actualModel *model, VkDevice de
     );
 
     float (*attribVertices)[3] = (float (*)[3])attrib.vertices;
+    float (*attribNormals)[3] = (float (*)[3])attrib.normals;
     float (*attribTexcoords)[2] = (float (*)[2])attrib.texcoords;
 
     model->meshQuantity = 1;
@@ -197,6 +198,7 @@ void objLoadModel(const char *objectPath, struct actualModel *model, VkDevice de
             .weights = { 0.0f, 0.0f, 0.0f, 0.0f },
             .bone = { 0, 0, 0, 0 },
             .texCoord = { 0.0f, 0.0f },
+            .norm = { 0.0f, 0.0f, 0.0f },
             #ifdef GOOD_OLD
             .color = {
                 my_local_color[i % 8][0],
@@ -204,7 +206,7 @@ void objLoadModel(const char *objectPath, struct actualModel *model, VkDevice de
                 my_local_color[i % 8][2]
             }
             #else
-            .color = { 1.0f, 1.0f, 1.0f }
+            .color = { 1.0f, 1.0f, 1.0f },
             #endif
         };
     }
@@ -212,6 +214,9 @@ void objLoadModel(const char *objectPath, struct actualModel *model, VkDevice de
     for (size_t i = 0; i < attrib.num_faces; i += 1) {
         BFR(model->mesh[0].vertices)[attrib.faces[i].v_idx].texCoord[0] = 0.0f + attribTexcoords[attrib.faces[i].vt_idx][0];
         BFR(model->mesh[0].vertices)[attrib.faces[i].v_idx].texCoord[1] = 1.0f - attribTexcoords[attrib.faces[i].vt_idx][1];
+        BFR(model->mesh[0].vertices)[attrib.faces[i].v_idx].norm[0] = attribNormals[attrib.faces[i].vt_idx][0];
+        BFR(model->mesh[0].vertices)[attrib.faces[i].v_idx].norm[1] = attribNormals[attrib.faces[i].vt_idx][1];
+        BFR(model->mesh[0].vertices)[attrib.faces[i].v_idx].norm[2] = attribNormals[attrib.faces[i].vt_idx][2];
 
         model->mesh[0].indices[i] = attrib.faces[i].v_idx;
     }

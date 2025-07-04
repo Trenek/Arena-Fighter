@@ -5,6 +5,7 @@ layout(location = 1) in  vec3 inColor;
 layout(location = 2) in  vec2 inTexCoord;
 layout(location = 3) in ivec4 inBoneIDs;
 layout(location = 4) in  vec4 inWeights;
+layout(location = 5) in  vec3 inNormal;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;

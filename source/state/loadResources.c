@@ -48,8 +48,8 @@ static void addModelData(struct EngineCore *this) {
     addResource(modelData, "font", loadModel("fonts/c.ttf", &this->graphics), destroyActualModel);
     addResource(modelData, "flat", loadModel("models/my_model2d.obj", &this->graphics), destroyActualModel);
     addResource(modelData, "skyBox", loadModel("models/my_skybox.obj", &this->graphics), destroyActualModel);
-    addResource(modelData, "floor", loadModel("models/my_floor.obj", &this->graphics), destroyActualModel);
-    addResource(modelData, "cube", loadModel("models/my_cube.obj", &this->graphics), destroyActualModel);
+    addResource(modelData, "floor", loadModel("models/my_floor.glb", &this->graphics), destroyActualModel);
+    addResource(modelData, "cube", loadModel("models/my_cube.glb", &this->graphics), destroyActualModel);
 
     addResource(&this->resource, "modelData", modelData, cleanupResources);
 }
@@ -113,7 +113,7 @@ static void addObjectLayout(struct EngineCore *this) {
                 .descriptorCount = 1,
                 .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
                 .pImmutableSamplers = NULL
-            }
+            },
         }), this->graphics.device), 
         destroyDescriptorSetLayout
     );
@@ -228,7 +228,7 @@ static void createGraphicPipelines(struct EngineCore *this) {
 
         Vert(AnimVertex),
         .operation = VK_COMPARE_OP_LESS,
-        .cullFlags = VK_CULL_MODE_NONE,
+        .cullFlags = VK_CULL_MODE_BACK_BIT,
 
         .cameraLayout = cameraLayout->descriptorSetLayout
     }, &this->graphics), destroyObjGraphicsPipeline);
