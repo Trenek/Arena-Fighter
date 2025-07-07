@@ -3,7 +3,7 @@
 #include "state.h"
 
 int main() {
-    struct EngineCore engine = setup();
+    struct EngineCore engine = setup("Arena Fighter", "textures/iconka.png");
     void (* const state[])(struct EngineCore *engine, enum state *state) = {
         [GAME] = game,
         [LOAD_GAME] = loadGame,
