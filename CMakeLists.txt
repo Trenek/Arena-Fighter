@@ -17,7 +17,7 @@ add_executable(Arena-Fighter
     "${CMAKE_SOURCE_DIR}/source/main.c"
 )
 
-target_link_libraries(Arena-Fighter ${LINK_LIBRARIES})
+target_link_libraries(Arena-Fighter ${LINK_LIBRARIES} tREngine)
 target_include_directories(Arena-Fighter PRIVATE 
     ${INCLUDE_DIRECTORIES}
     ${SOURCE_DIRECTORIES}
