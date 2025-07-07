@@ -240,6 +240,7 @@ void win(struct EngineCore *engine, enum state *state) {
         },
     };
 
+    stopPrevSound(&engine->soundManager);
     playSound(&engine->soundManager, 2, true, 1.0f);
 
     while (WIN_SCREEN == *state && !shouldWindowClose(engine->window)) {

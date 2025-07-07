@@ -70,6 +70,7 @@ void game(struct EngineCore *engine, enum state *state) {
     struct playerInstance *enemy = entity[2]->instance;
     struct instance *text = entity[3]->instance;
 
+    stopPrevSound(&engine->soundManager);
     playSound(&engine->soundManager, 1, true, 1.0f);
 
     while (GAME == *state && !shouldWindowClose(engine->window)) {

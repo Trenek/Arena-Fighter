@@ -516,7 +516,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    addResource(&engine->resource, "ScreenData", screenData, cleanupResources);
+    addResource(&engine->resource, "ScreenData", screenData, cleanupResourceManager);
 }
 
 void createPlayerStructs(struct EngineCore *engine) {

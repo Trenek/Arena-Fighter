@@ -158,6 +158,7 @@ void menu(struct EngineCore *engine, enum state *state) {
         .direction = { 0.0, 1.0, 0.0 }
     };
 
+    stopPrevSound(&engine->soundManager);
     playSound(&engine->soundManager, 0, true, 1.0f);
 
     while (MAIN_MENU == *state && !shouldWindowClose(engine->window)) {
