@@ -71,18 +71,14 @@ set(SHADER_DST "${CMAKE_BINARY_DIR}/shaders")
 add_custom_command(TARGET shaders POST_BUILD
     COMMAND glslc ${SHADER_SRC}/shader.vert -o ${SHADER_DST}/vert.spv
     COMMAND glslc ${SHADER_SRC}/shader.frag -o ${SHADER_DST}/frag.spv
-    COMMAND glslc ${SHADER_SRC}/playerAnimation.vert -o ${SHADER_DST}/playerAnimation.spv
-    COMMAND glslc ${SHADER_SRC}/playerShader.frag -o ${SHADER_DST}/playerFrag.spv
-    COMMAND glslc ${SHADER_SRC}/shaderText.frag -o ${SHADER_DST}/fragText.spv
-    COMMAND glslc ${SHADER_SRC}/shader2d.frag -o ${SHADER_DST}/frag2d.spv
-    COMMAND glslc ${SHADER_SRC}/shader2d.vert -o ${SHADER_DST}/vert2d.spv
+    COMMAND glslc ${SHADER_SRC}/player.vert -o ${SHADER_DST}/playerV.spv
+    COMMAND glslc ${SHADER_SRC}/player.frag -o ${SHADER_DST}/playerF.spv
+    COMMAND glslc ${SHADER_SRC}/rect.frag -o ${SHADER_DST}/rectF.spv
+    COMMAND glslc ${SHADER_SRC}/rect.vert -o ${SHADER_DST}/rectV.spv
     COMMAND glslc ${SHADER_SRC}/text.vert -o ${SHADER_DST}/textV.spv
-    COMMAND glslc ${SHADER_SRC}/text2d.vert -o ${SHADER_DST}/text2dV.spv
     COMMAND glslc ${SHADER_SRC}/text.frag -o ${SHADER_DST}/textF.spv
     COMMAND glslc ${SHADER_SRC}/skybox.vert -o ${SHADER_DST}/skyboxV.spv
     COMMAND glslc ${SHADER_SRC}/skybox.frag -o ${SHADER_DST}/skyboxF.spv
-    COMMAND glslc ${SHADER_SRC}/animation.vert -o ${SHADER_DST}/animation.spv
-    COMMAND glslc ${SHADER_SRC}/debugShader.frag -o ${SHADER_DST}/debugFrag.spv
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/textures ${CMAKE_BINARY_DIR}/textures
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/models ${CMAKE_BINARY_DIR}/models
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/fonts ${CMAKE_BINARY_DIR}/fonts

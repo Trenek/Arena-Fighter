@@ -1,65 +1,51 @@
-#include <openGJK.h>
 #include <assert.h>
 #include <string.h>
+
+#include <ccd/ccd.h>
+#include <cglm/cglm.h>
 
 #include "player.h"
 #include "entity.h"
 
-#include "Vertex.h"
-#include "instanceBuffer.h"
-#include "actualModel.h"
+#include "myInstance.h"
+#include "model.h"
+#include "gltf.h"
 
 typedef float vec3[3];
 
-static bool checkCubeCollision(vec3 shape3d1[8], vec3 shape3d2[8]) {
-    gkPolytope p1 = {
-        .numpoints = 8,
-        .coord = (gkFloat *[]) {
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 }
+void support_func(const void *obj, const ccd_vec3_t *dir, ccd_vec3_t *out) {
+    const ccd_vec3_t *shape = obj;
+
+    int max_idx = 0;
+    float max_dot = ccdVec3Dot(&shape[0], dir);
+
+    static_assert(sizeof(vec3) == sizeof(ccd_vec3_t));
+
+    for (int i = 1; i < 8; i += 1) {
+        float dot = ccdVec3Dot(&shape[i], dir);
+        if (max_dot < dot) {
+            max_dot = dot;
+            max_idx = i;
         }
-    };
-
-    gkPolytope p2 = {
-        .numpoints = 8,
-        .coord = (gkFloat *[]) {
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 },
-            (gkFloat[3]) { 0, 0, 0 }
-        }
-    };
-
-    gkSimplex s = {
-        .nvrtx = 0
-    };
-
-    for (int i = 0; i < 8; i++) {
-        p1.coord[i][0] = shape3d1[i][0];
-        p1.coord[i][1] = shape3d1[i][1];
-        p1.coord[i][2] = shape3d1[i][2];
-
-        p2.coord[i][0] = shape3d2[i][0];
-        p2.coord[i][1] = shape3d2[i][1];
-        p2.coord[i][2] = shape3d2[i][2];
     }
 
-    gkFloat distance = compute_minimum_distance(p1, p2, &s);
-
-    return distance <= 0.0;
+    memcpy(out->v, &shape[max_idx], sizeof(vec3));
 }
 
-static struct colisionBox *find(size_t q, struct colisionBox s[q], const char *name) {
+bool checkCubeCollision(vec3 shape1[8], vec3 shape2[8]) {
+    return ccdGJKIntersect(shape1, shape2, &(ccd_t) {
+        .first_dir = ccdFirstDirDefault,
+        .support1 = support_func,
+        .support2 = support_func,
+
+        .max_iterations = -1,
+        .epa_tolerance = CCD_REAL(0.0001),
+        .mpr_tolerance = CCD_REAL(0.0001),
+        .dist_tolerance = CCD_REAL(1e-6),
+    });
+}
+
+static struct ColisionBox *find(size_t q, struct ColisionBox s[q], const char *name) {
     size_t i = 0;
 
     while (i < q && 0 != strcmp(s[i].name, name)) i += 1;
@@ -67,13 +53,50 @@ static struct colisionBox *find(size_t q, struct colisionBox s[q], const char *n
     return i == q ? NULL : &s[i];
 }
 
-static void applyTransformations(struct colisionBox cB, struct Entity *model, vec3 *out) {
-    struct AnimVertex **vert = (void *)cB.vertex;
+static int getNodeID(struct AnimationData *anim, float ID) {
+    return anim[(int)ID].jointToNodeID;
+}
+
+static void applyTransformations(struct ColisionBox cB, struct Entity *model, vec3 *out) {
+    struct GltfVertex *vert = cB.vertex;
     struct playerInstanceBuffer *ins = model->buffer[0];
-    mat4 *mat = model->buffer[2];
+    struct AnimationData *anim = model->buffer[2];
 
     for (size_t i = 0; i < cB.qVertex; i += 1) {
-        glm_mat4_mulv3(mat[vert[i]->bone[0]], vert[i]->pos, 1, out[i]);
+        float *jointID = vert[i].joint;
+        float *weight = vert[i].weight;
+
+        size_t nodeID[] = {
+            getNodeID(anim, jointID[0]),
+            getNodeID(anim, jointID[1]),
+            getNodeID(anim, jointID[2]),
+            getNodeID(anim, jointID[3])
+        };
+
+        mat4 result;
+        
+        if (weight[0] == 0 && weight[1] == 0 && weight[2] == 0 && weight[3] == 0) {
+            glm_mat4_identity(result);
+        }
+        else for (size_t j = 0; j < 4; j += 1) {
+            mat4 *aaa[] = {
+                &anim[nodeID[0]].animation,
+                &anim[nodeID[1]].animation,
+                &anim[nodeID[2]].animation,
+                &anim[nodeID[3]].animation,
+            };
+
+            for (size_t k = 0; k < 4; k += 1)
+            for (size_t z = 0; z < 4; z += 1)
+                result[k][z] =
+                    (*aaa[0])[k][z] * vert[i].weight[0] +
+                    (*aaa[1])[k][z] * vert[i].weight[1] +
+                    (*aaa[2])[k][z] * vert[i].weight[2] +
+                    (*aaa[3])[k][z] * vert[i].weight[3]
+                ;
+        }
+
+        glm_mat4_mulv3(result, vert[i].pos, 1, out[i]);
         glm_mat4_mulv3(ins->modelMatrix, out[i], 1, out[i]);
     }
 }
@@ -84,7 +107,7 @@ static void add(size_t q, vec3 arr[q], vec3 toAdd) {
     }
 }
 
-static bool checkCubesColision(struct colisionBox cB1, struct Entity *model1, struct colisionBox cB2, struct Entity *model2, vec3 toAdd) {
+static bool checkCubesColision(struct ColisionBox cB1, struct Entity *model1, struct ColisionBox cB2, struct Entity *model2, vec3 toAdd) {
     vec3 transformed1[cB1.qVertex]; {
         applyTransformations(cB1, model1, transformed1);
         add(cB1.qVertex, transformed1, toAdd);
@@ -105,18 +128,17 @@ static bool checkCubesColision(struct colisionBox cB1, struct Entity *model1, st
 }
 
 bool checkForColisionToAdd(struct player *p, const char *name, vec3 toAdd) {
-    struct colisionBox *a = find(p->actualModel->qHitbox, p->actualModel->hitBox, name); {
-        if (a == NULL) a = find(p->actualModel->qHurtBox, p->actualModel->hurtBox, name); 
+    struct GltfModelInfo *pInfo = p->model->info;
+    struct GltfModelInfo *eInfo = p->enemy->model->info;
+
+    struct ColisionBox *a = find(pInfo->qHitbox, pInfo->hitBox, name); {
+        if (a == NULL) a = find(pInfo->qHurtBox, pInfo->hurtBox, name); 
         assert(a != NULL);
     }
     bool result = false;
 
-    for (size_t i = 0; result == false && i < p->enemy->actualModel->qHurtBox; i += 1) {
-        result = checkCubesColision(
-            *a, p->model, 
-            p->enemy->actualModel->hurtBox[i], p->enemy->model,
-            toAdd
-        );
+    for (size_t i = 0; result == false && i < eInfo->qHurtBox; i += 1) {
+        result = checkCubesColision(*a, p->entity, eInfo->hurtBox[i], p->enemy->entity, toAdd);
     }
 
     return result;

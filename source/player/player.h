@@ -5,8 +5,8 @@ typedef float vec3[3];
 struct player {
     struct player *enemy;
 
-    struct Entity *model;
-    struct actualModel *actualModel;
+    struct Entity *entity;
+    struct Model *model;
 
     // w, a, s, d, x, y, a, b, left, right
     int playerKeys[10];

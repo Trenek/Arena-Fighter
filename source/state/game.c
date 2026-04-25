@@ -1,82 +1,85 @@
-#include <cglm.h>
+#include <cglm/cglm.h>
 #include <string.h>
 
+#include "sound.h"
 #include "engineCore.h"
 #include "state.h"
 
-#include "asset.h"
 #include "entity.h"
-#include "instanceBuffer.h"
+#include "myInstance.h"
 
 #include "graphicsPipelineObj.h"
 #include "renderPassObj.h"
 
 #include "player.h"
 
+#include "gameEnum.h"
+
 void game(struct EngineCore *engine, enum state *state) {
-    struct ResourceManager *entityData = findResource(&engine->resource, "Entity");
-    struct ResourceManager *screenData = findResource(&engine->resource, "ScreenData");
+    struct ResourceManager *entityData = findResource(&engine->resource, ENTITY);
+    struct ResourceManager *screenData = findResource(&engine->resource, SCREEN_DATA);
+    struct SoundManager *soundManager = findResource(&engine->resource, SOUND_MANAGER);
 
     struct Entity *entity[] = {
-        findResource(entityData, "Floor"),
-        findResource(entityData, "Player 1"),
-        findResource(entityData, "Player 2"),
-        findResource(entityData, "Fight!"),
-        findResource(entityData, "Background"),
-        findResource(entityData, "Player 1 Text"),
-        findResource(entityData, "Player 2 Text"),
-        findResource(entityData, "Blue Back"),
-        findResource(entityData, "Health"),
-        findResource(entityData, "Health Background"),
-        findResource(entityData, "Rest"),
-        findResource(entityData, "Rest Background"),
-        findResource(entityData, "Cube")
+        findResource(entityData, ENTITY_FLOOR),
+        findResource(entityData, ENTITY_PLAYER_1),
+        findResource(entityData, ENTITY_PLAYER_2),
+        findResource(entityData, ENTITY_TEXT_FIGHT),
+        findResource(entityData, ENTITY_BACKGROUND),
+        findResource(entityData, ENTITY_TEXT_PLAYER_1),
+        findResource(entityData, ENTITY_TEXT_PLAYER_2),
+        findResource(entityData, ENTITY_BLUE_BACK),
+        findResource(entityData, ENTITY_HEALTH),
+        findResource(entityData, ENTITY_HEALTH_BACKGROUND),
+        findResource(entityData, ENTITY_REST),
+        findResource(entityData, ENTITY_REST_BACKGROUND),
+        findResource(entityData, ENTITY_CUBE)
     };
     size_t qEntity = sizeof(entity) / sizeof(struct Entity *);
-    
+
     struct renderPassObj *renderPass[] = {
-        findResource(screenData, "Left Screen"),
-        findResource(screenData, "Right Screen"),
-        findResource(screenData, "Background Left 1"),
-        findResource(screenData, "Background Right 1"),
-        findResource(screenData, "Middle Text"),
-        findResource(screenData, "Left Figure"),
-        findResource(screenData, "Right Figure"),
-        findResource(screenData, "Left Text"),
-        findResource(screenData, "Right Text"),
-        findResource(screenData, "Background Left 2"),
-        findResource(screenData, "Background Left 3"),
-        findResource(screenData, "Background Left 4"),
-        findResource(screenData, "Background Left 5"),
-        findResource(screenData, "Background Right 2"),
-        findResource(screenData, "Background Right 3"),
-        findResource(screenData, "Background Right 4"),
-        findResource(screenData, "Background Right 5"),
-        findResource(screenData, "Nothing"),
+        findResource(screenData, SCREEN_LEFT),
+        findResource(screenData, SCREEN_RIGHT),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_1),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_1),
+        findResource(screenData, SCREEN_MIDDLE_TEXT),
+        findResource(screenData, SCREEN_LEFT_FIGURE),
+        findResource(screenData, SCREEN_RIGHT_FIGURE),
+        findResource(screenData, SCREEN_LEFT_TEXT),
+        findResource(screenData, SCREEN_RIGHT_TEXT),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_2),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_3),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_4),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_5),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_2),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_3),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_4),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_5),
+        findResource(screenData, SCREEN_NOTHING),
     };
 
     size_t qRenderPass = sizeof(renderPass) / sizeof(struct renderPassObj *);
 
-    struct ResourceManager *renderPassCoreData = findResource(&engine->resource, "RenderPassCoreData");
+    struct ResourceManager *renderPassCoreData = findResource(&engine->resource, RENDER_PASS_CORE);
     struct renderPassCore *renderPassArr[] = { 
-        findResource(renderPassCoreData, "Clean"),
-        findResource(renderPassCoreData, "Stay")
+        findResource(renderPassCoreData, RENDER_PASS_CLEAN),
+        findResource(renderPassCoreData, RENDER_PASS_STAY)
     };
     size_t qRenderPassArr = sizeof(renderPassArr) / sizeof(struct renderPassCore *);
 
-    struct player *playerData = findResource(&engine->resource, "actualPlayerData");
+    struct player *playerData = findResource(&engine->resource, PLAYER_DATA);
 
     struct playerInstance *player = entity[1]->instance;
     struct playerInstance *enemy = entity[2]->instance;
-    struct instance *text = entity[3]->instance;
+    struct myInstance *text = entity[3]->instance;
 
-    stopPrevSound(&engine->soundManager);
-    playSound(&engine->soundManager, 1, true, 1.0f);
+    stopPrevSound(soundManager);
+    playSound(soundManager, 1, true, 1.0f);
 
     while (GAME == *state && !shouldWindowClose(engine->window)) {
         glfwPollEvents();
 
-        updateInstances(entity, qEntity, engine->deltaTime.deltaTime);
+        updateMyInstances(entity, qEntity, engine->deltaTime.deltaTime);
 
         movePlayer(&playerData[0], &engine->window, engine->deltaTime.deltaTime, state);
         movePlayer(&playerData[1], &engine->window, engine->deltaTime.deltaTime, state);
@@ -108,9 +111,9 @@ void game(struct EngineCore *engine, enum state *state) {
                 *numb = playerData[0].currentHealth <= 0 ? GLFW_JOYSTICK_2 : GLFW_JOYSTICK_1;
             }
 
-            addResource(&engine->resource, "playerInfo", info, free);
-            addResource(&engine->resource, "playerName", name, free);
-            addResource(&engine->resource, "playerNumb", numb, free);
+            addResource(&engine->resource, PLAYER_INFO, info, free);
+            addResource(&engine->resource, PLAYER_NAME, name, free);
+            addResource(&engine->resource, PLAYER_NUMB, numb, free);
             break;
         }
         case PAUSE: {
@@ -118,7 +121,7 @@ void game(struct EngineCore *engine, enum state *state) {
                 *numb = playerData[0].currentHealth <= 0 ? GLFW_JOYSTICK_2 : GLFW_JOYSTICK_1;
             }
 
-            addResource(&engine->resource, "playerNumb", numb, free);
+            addResource(&engine->resource, PLAYER_NUMB, numb, free);
         }
         default:
     };
@@ -128,7 +131,7 @@ void game(struct EngineCore *engine, enum state *state) {
             break;
         default:
             vkDeviceWaitIdle(engine->graphics.device);
-            cleanupResource(&engine->resource, "ScreenData");
-            cleanupResource(&engine->resource, "actualPlayerData");
+            cleanupResource(&engine->resource, SCREEN_DATA);
+            cleanupResource(&engine->resource, PLAYER_DATA);
     };
 }

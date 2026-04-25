@@ -1,10 +1,16 @@
+set(CMAKE_POLICY_VERSION_MINIMUM 3.11...3.30)
+
 add_subdirectory(tREngine EXCLUDE_FROM_ALL)
+add_subdirectory(miniaudio EXCLUDE_FROM_ALL)
+add_subdirectory(libccd EXCLUDE_FROM_ALL)
 
 set(INCLUDE_DIRECTORIES
 )
 
 set(LINK_LIBRARIES
     tREngine
+    miniaudio
+    ccd
 )
 
 set(INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} PARENT_SCOPE)

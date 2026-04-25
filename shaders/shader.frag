@@ -17,6 +17,23 @@ float minmax(float minn, float maxx, float val) {
     return max(minn, min(maxx, val));
 }
 
+struct Materials {
+	vec4 base_color_factor;
+	float metallic_factor;
+	float roughness_factor;
+    uint baseColorID;
+    uint pad0;
+};
+
+layout(std140, set = 0, binding = 3) readonly buffer ObjectBuffer{
+	Materials nr[];
+} material;
+
+layout(push_constant) uniform constants {
+	int nodeID;
+    int materialID;
+} PushConstants;
+
 void main() {
     vec3 color = texture(texSampler[fragTexIndex], fragTexCoord).rgb;
 

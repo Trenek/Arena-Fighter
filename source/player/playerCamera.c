@@ -2,11 +2,11 @@
 #include "entity.h"
 #include "camera.h"
 
-#include "instanceBuffer.h"
+#include "myInstance.h"
 
 struct camera updateSplitScreenCamera(struct player *p) {
-    struct playerInstance *player = p->model->instance;
-    struct playerInstance *enemy = p->enemy->model->instance;
+    struct playerInstance *player = p->entity->instance;
+    struct playerInstance *enemy = p->enemy->entity->instance;
 
     vec2 delta; {
         glm_vec2_sub(player->pos, enemy->pos, delta);
@@ -29,7 +29,7 @@ struct camera updateSplitScreenCamera(struct player *p) {
 }
 
 struct camera updateFaceCamera(struct player *p) {
-    struct playerInstance *player = p->model->instance;
+    struct playerInstance *player = p->entity->instance;
 
     return (struct camera) {
         .pos = {

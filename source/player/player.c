@@ -3,14 +3,13 @@
 #include "entity.h"
 #include "camera.h"
 
-#include "instanceBuffer.h"
+#include "myInstance.h"
 #include "windowManager.h"
-#include "actualModel.h"
+#include "gltf.h"
+#include "model.h"
 
 bool checkForColisionToAdd(struct player *p, const char *name, vec3 toAdd);
 bool checkForColision(struct player *p, const char *name);
-
-void animate(struct Entity *model, struct actualModel *actualModel, size_t animID, float deltaTime);
 
 struct camera updateSplitScreenCamera(struct player *p);
 struct camera updateFaceCamera(struct player *p);
@@ -47,8 +46,8 @@ static void getWalkDirection(struct WindowManager *wc, int key[4], int joystick,
 }
 
 static void getPlayerDisplacement(struct player *p, struct WindowManager *wc, vec2 displacement) {
-    struct playerInstance *player = p->model->instance;
-    struct playerInstance *enemy = p->enemy->model->instance;
+    struct playerInstance *player = p->entity->instance;
+    struct playerInstance *enemy = p->enemy->entity->instance;
 
     vec2 direction; {
         getWalkDirection(wc, p->playerKeys, p->playerJoystick, direction);
@@ -65,15 +64,32 @@ static void getPlayerDisplacement(struct player *p, struct WindowManager *wc, ve
 #define MAX(x, y) ((x) > (y) ? (x) : (y)) 
 #define MIN(x, y) ((x) < (y) ? (x) : (y)) 
 
-static void hitLock(struct player *p, float deltaTime) {
-    struct jointData (*data)[p->actualModel->qJoint] = p->actualModel->anim;
-    struct timeFrame *frame = data[p->state][0].transformation;
-    size_t qData = data[p->state][0].transformation[0].qData;
+static float getMaxTime(struct GltfModelInfo *pInfo, size_t state) {
+    struct Frames (*animFrames)[pInfo->qNodes][ANIM_PATH_TYPE_MAX_ENUM] = (void *)pInfo->frames;
+    struct Frames *frame = animFrames[state][0];
 
+    float maxTime = 0;
+
+    for (size_t i = 0; i < ANIM_PATH_TYPE_MAX_ENUM; i += 1) {
+        size_t qData = frame[i].qFrames;
+
+        if (qData) {
+            size_t qComponents = frame[i].qComponents;
+
+            float (*val)[qComponents + 1] = (void *)frame[i].values;
+        
+            maxTime = MAX(maxTime, val[qData - 1][0]);
+        }
+    }
+
+    return maxTime;
+}
+
+static void hitLock(struct player *p, float deltaTime) {
     struct {
         const char **hitBoxes;
         size_t qHitBoxes;
-        
+
         enum animation enemyState;
         int damage;
     } names[] = {
@@ -129,7 +145,9 @@ static void hitLock(struct player *p, float deltaTime) {
         }
     };
 
-    if (p->hitTime < frame[0].data[qData - 1].time) {
+    float maxTime = getMaxTime(p->model->info, p->state);
+
+    if (p->hitTime < maxTime) {
         bool didColide = false;
 
         for (size_t i = 0; false == didColide && i < names[p->state].qHitBoxes; i += 1) {
@@ -144,13 +162,13 @@ static void hitLock(struct player *p, float deltaTime) {
             p->enemy->hurtTime = 1;
         }
         p->hitTime += deltaTime;
-        p->time = MIN(p->hitTime, frame[0].data[qData - 1].time - 0.1);
+        p->time = MIN(p->hitTime, maxTime - 0.1);
     }
-    else if (p->hitTime < frame[0].data[qData - 1].time + 1) {
+    else if (p->hitTime < maxTime + 1) {
         p->hitLock = false;
         p->doesHitLast = true;
         p->hitTime += deltaTime;
-        p->time = frame[0].data[qData - 1].time - 0.1;
+        p->time = maxTime - 0.1;
     }
     else {
         p->hitLock = false;
@@ -162,8 +180,8 @@ static void hitLock(struct player *p, float deltaTime) {
 }
 
 static void hurtLock(struct player *p, float deltaTime) {
-    struct playerInstance *player = p->model->instance;
-    struct playerInstance *enemy = p->enemy->model->instance;
+    struct playerInstance *player = p->entity->instance;
+    struct playerInstance *enemy = p->enemy->entity->instance;
 
     if (checkForColision(p, "HurtBox-Torso") ||
         checkForColision(p, "Hurtbox-Head")) {
@@ -180,7 +198,7 @@ static void hurtLock(struct player *p, float deltaTime) {
 }
 
 void move(struct player *p, float deltaTime, vec2 dis) {
-    struct playerInstance *player = p->model->instance;
+    struct playerInstance *player = p->entity->instance;
 
     if (false == checkForColisionToAdd(p, "HurtBox-Torso", (vec3) {
         deltaTime * dis[0],
@@ -322,7 +340,7 @@ int getState(struct player *p, struct WindowManager *wc, vec2 displacement, enum
 }
 
 void movePlayer(struct player *p, struct WindowManager *wc, float deltaTime, enum state *state) {
-    struct playerInstance *player = p->model->instance;
+    struct playerInstance *player = p->entity->instance;
     vec2 displacement = {};
     int wal = getState(p, wc, displacement, state);
 
@@ -373,11 +391,11 @@ void movePlayer(struct player *p, struct WindowManager *wc, float deltaTime, enu
     if (player->pos[1] >  10) player->pos[1] =  10;
     player->pos[2] = (player->pos[2] > 0) ? player->pos[2] - deltaTime : 0;
 
-    animate(p->model, p->actualModel, p->state, p->time);
+    animate(p->entity, p->model, p->state, p->time);
 }
 
 void posePlayer(struct player *p, float deltaTime) {
     p->time += deltaTime;
 
-    animate(p->model, p->actualModel, p->state, p->time);
+    animate(p->entity, p->model, p->state, p->time);
 }

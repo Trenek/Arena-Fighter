@@ -1,57 +1,69 @@
-#include <cglm.h>
+#include <cglm/cglm.h>
 
 #include "GLFW/glfw3.h"
 #include "engineCore.h"
 #include "state.h"
 
-#include "asset.h"
 #include "entity.h"
-#include "instanceBuffer.h"
+#include "myInstance.h"
+
+#include "texture.h"
+#include "camera.h"
 
 #include "graphicsPipelineObj.h"
 #include "renderPassObj.h"
 
 #include "player.h"
 
+#include "gameEnum.h"
+
 static void createScreens(struct EngineCore *engine) {
-    struct ResourceManager *entityData = findResource(&engine->resource, "Entity");
-    struct ResourceManager *graphicPipelineData = findResource(&engine->resource, "graphicPipelines");
+    struct ResourceManager *screenData = calloc(1, sizeof(struct ResourceManager));
+
+    struct ResourceManager *entityData = findResource(&engine->resource, ENTITY);
+    struct ResourceManager *graphicPipelineData = findResource(&engine->resource, GRAPHIC_PIPELINE);
+    struct ResourceManager *renderPassCoreData = findResource(&engine->resource, RENDER_PASS_CORE);
+    struct ResourceManager *textureData = findResource(&engine->resource, TEXTURE);
 
     struct graphicsPipeline *pipe[] = { 
-        findResource(graphicPipelineData, "Floor"),
-        findResource(graphicPipelineData, "Animated Model"),
-        findResource(graphicPipelineData, "Text"),
-        findResource(graphicPipelineData, "Skybox"),
-        findResource(graphicPipelineData, "FlatColor"),
+        findResource(graphicPipelineData, GRAPHIC_PIPELINE_GLTF_FLOOR),
+        findResource(graphicPipelineData, GRAPHIC_PIPELINE_PLAYER),
+        findResource(graphicPipelineData, GRAPHIC_PIPELINE_FONT),
+        findResource(graphicPipelineData, GRAPHIC_PIPELINE_SKYBOX),
+        findResource(graphicPipelineData, GRAPHIC_PIPELINE_REC),
     };
 
     struct Entity *entity[] = {
-        findResource(entityData, "Floor"),
-        findResource(entityData, "Player 1"),
-        findResource(entityData, "Player 2"),
-        findResource(entityData, "Fight!"),
-        findResource(entityData, "Background"),
-        findResource(entityData, "Player 1 Text"),
-        findResource(entityData, "Player 2 Text"),
-        findResource(entityData, "Blue Back"),
-        findResource(entityData, "Health"),
-        findResource(entityData, "Health Background"),
-        findResource(entityData, "Rest"),
-        findResource(entityData, "Rest Background"),
-        findResource(entityData, "Cube")
+        findResource(entityData, ENTITY_FLOOR),
+        findResource(entityData, ENTITY_PLAYER_1),
+        findResource(entityData, ENTITY_PLAYER_2),
+        findResource(entityData, ENTITY_TEXT_FIGHT),
+        findResource(entityData, ENTITY_BACKGROUND),
+        findResource(entityData, ENTITY_TEXT_PLAYER_1),
+        findResource(entityData, ENTITY_TEXT_PLAYER_2),
+        findResource(entityData, ENTITY_BLUE_BACK),
+        findResource(entityData, ENTITY_HEALTH),
+        findResource(entityData, ENTITY_HEALTH_BACKGROUND),
+        findResource(entityData, ENTITY_REST),
+        findResource(entityData, ENTITY_REST_BACKGROUND),
+        findResource(entityData, ENTITY_CUBE)
     };
     
-    struct ResourceManager *screenData = calloc(1, sizeof(struct ResourceManager));
+    struct renderPassCore *clean = findResource(renderPassCoreData, RENDER_PASS_CLEAN);
+    struct renderPassCore *stay = findResource(renderPassCoreData, RENDER_PASS_STAY);
 
-    struct ResourceManager *renderPassCoreData = findResource(&engine->resource, "RenderPassCoreData");
-    struct renderPassCore *clean = findResource(renderPassCoreData, "Clean");
-    struct renderPassCore *stay = findResource(renderPassCoreData, "Stay");
+    struct Textures *texture = findResource(textureData, TEXTURE_BUTTON);
+    struct Textures *colorTexture = findResource(textureData, TEXTURE_COLORS);
+    struct Textures *cubeMap = findResource(textureData, TEXTURE_CUBEMAP);
 
-    addResource(screenData, "Left Screen", createRenderPassObj((struct renderPassBuilder){
+    struct descriptorSetLayout *cameraLayout = findResource(findResource(&engine->resource, OBJECT_LAYOUT), OBJECT_LAYOUT_CAMERA);
+
+    addResource(screenData, SCREEN_LEFT, createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0, 0.0, 0.5, 1.0 },
             .renderPass = clean,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[0],
                     .entity = (struct Entity *[]) {
                         entity[0],
@@ -60,27 +72,34 @@ static void createScreens(struct EngineCore *engine) {
                     .qEntity = 2
                 },
                 {
+                    .texture = &texture->descriptor,
                     .pipe = pipe[1],
                     .entity = entity + 1,
                     .qEntity = 2
                 },
                 {
+                    .texture = &cubeMap->descriptor,
                     .pipe = pipe[3],
                     .entity = entity + 4,
                     .qEntity = 1
                 },
             },
             .qData = 3,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Right Screen",
+    addResource(screenData, SCREEN_RIGHT,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.5, 0.0, 0.5, 1.0 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[0],
                     .entity = (struct Entity *[]) {
                         entity[0],
@@ -89,54 +108,70 @@ static void createScreens(struct EngineCore *engine) {
                     .qEntity = 2
                 },
                 {
+                    .texture = &texture->descriptor,
                     .pipe = pipe[1],
                     .entity = entity + 1,
                     .qEntity = 2
                 },
                 {
+                    .texture = &cubeMap->descriptor,
                     .pipe = pipe[3],
                     .entity = entity + 4,
                     .qEntity = 1
                 },
             },
             .qData = 3,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Left 1",
+    addResource(screenData, SCREEN_BACKGROUND_LEFT_1,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0 / 8, 0.0 / 8, 2.0 / 8, 1.0 / 8 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 7,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Right 1",
+    addResource(screenData, SCREEN_BACKGROUND_RIGHT_1,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 0.0 / 8, 2.0 / 8, 1.0 / 8 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 7,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Middle Text",
+    addResource(screenData, SCREEN_MIDDLE_TEXT,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0, 0.0, 1.0, 1.0 },
             .renderPass = stay,
@@ -150,43 +185,57 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateFirstPersonCameraBuffer
+            .updateCameraBuffer = myUpdateFirstPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Left Figure",
+    addResource(screenData, SCREEN_LEFT_FIGURE,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0 / 8, 0.0 / 8, 1.0 / 8, 1.0 / 8 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &texture->descriptor,
                     .pipe = pipe[1],
                     .entity = entity + 1,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Right Figure",
+    addResource(screenData, SCREEN_RIGHT_FIGURE,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 7.0 / 8, 0.0 / 8, 1.0 / 8, 1.0 / 8 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &texture->descriptor,
                     .pipe = pipe[1],
                     .entity = entity + 2,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Left Text",
+    addResource(screenData, SCREEN_LEFT_TEXT,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0 / 8, 0.0 / 8, 1.0 / 8, 1.0 / 8 },
             .renderPass = stay,
@@ -200,11 +249,15 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateFirstPersonCameraBuffer
+            .updateCameraBuffer = myUpdateFirstPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Right Text",
+    addResource(screenData, SCREEN_RIGHT_TEXT,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 7.0 / 8, 0.0 / 8, 1.0 / 8, 1.0 / 8 },
             .renderPass = stay,
@@ -218,162 +271,210 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateFirstPersonCameraBuffer
+            .updateCameraBuffer = myUpdateFirstPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Left 2",
+    addResource(screenData, SCREEN_BACKGROUND_LEFT_2,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 1.0 / 8, 2.0 / 80, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 9,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Left 3",
+    addResource(screenData, SCREEN_BACKGROUND_LEFT_3,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 1.0 / 8, 6.0 / 90, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 11,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Left 4",
+    addResource(screenData, SCREEN_BACKGROUND_LEFT_4,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 1.0 / 8, 2.0 / 80, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 8,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Left 5",
+    addResource(screenData, SCREEN_BACKGROUND_LEFT_5,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 1.0 / 8, 6.0 / 90, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 10,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Right 2",
+    addResource(screenData, SCREEN_BACKGROUND_RIGHT_2,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 2.0 / 80, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 9,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Right 3",
+    addResource(screenData, SCREEN_BACKGROUND_RIGHT_3,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 6.0 / 90, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 11,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Right 4",
+    addResource(screenData, SCREEN_BACKGROUND_RIGHT_4,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 2.0 / 80, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 8,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Background Right 5",
+    addResource(screenData, SCREEN_BACKGROUND_RIGHT_5,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 6.0 / 90, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
             .data = (struct pipelineConnection[]) {
                 {
+                    .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
                     .entity = entity + 10,
                     .qEntity = 1
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
-    addResource(screenData, "Nothing",
+    addResource(screenData, SCREEN_NOTHING,
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0, 0.0, 1.0, 1.0 },
             .renderPass = stay,
-            .updateCameraBuffer = updateThirdPersonCameraBuffer
+            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
+            .cameraSize = sizeof(struct camera),
+            .cameraBufferSize = sizeof(struct CameraBuffer),
+            .camera = &(struct camera){},
+            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
         }, &engine->graphics),
         destroyRenderPassObj
     );
 
-    struct instance *floor = entity[0]->instance;
+    struct myInstance *floor = entity[0]->instance;
     struct playerInstance *player = entity[1]->instance;
     struct playerInstance *enemy = entity[2]->instance;
-    struct instance *text = entity[3]->instance;
-    struct instance *player1Text = entity[5]->instance;
-    struct instance *player2Text = entity[6]->instance;
-    struct instance *background = entity[4]->instance;
-    struct instance *flat = entity[7]->instance;
-    struct instance *red = entity[8]->instance;
-    struct instance *redBg = entity[9]->instance;
-    struct instance *blue = entity[10]->instance;
-    struct instance *blueBg = entity[11]->instance;
-    struct instance *ring = entity[12]->instance;
+    struct myInstance *text = entity[3]->instance;
+    struct myInstance *player1Text = entity[5]->instance;
+    struct myInstance *player2Text = entity[6]->instance;
+    struct myInstance *background = entity[4]->instance;
+    struct myInstance *flat = entity[7]->instance;
+    struct myInstance *red = entity[8]->instance;
+    struct myInstance *redBg = entity[9]->instance;
+    struct myInstance *blue = entity[10]->instance;
+    struct myInstance *blueBg = entity[11]->instance;
+    struct myInstance *ring = entity[12]->instance;
 
-    floor[0] = (struct instance){
+    floor[0] = (struct myInstance){
         .pos = { 0.5f, 0.5f, -5.0f },
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { glm_rad(90), 0.0f, 0.0f },
@@ -399,34 +500,34 @@ static void createScreens(struct EngineCore *engine) {
         .dressColor = { 0, 1, 0 }
     };
 
-    text[0] = (struct instance){
+    text[0] = (struct myInstance){
         .pos = { 0.0f, 0.3f, 0.0f },
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
-        .scale = { 4 * 10e-3, 4 * 10e-3, 4 * 10e-3 },
+        .scale = { 5 * 10e-7, 5 * 10e-7, 5 * 10e-7 },
         .textureIndex = 0,
         .shadow = false
     };
 
-    player1Text[0] = (struct instance){
+    player1Text[0] = (struct myInstance){
         .pos = { 0.0f, -0.35f, 0.0f },
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
-        .scale = { 2 * 10e-2, 2 * 10e-2, 2 * 10e-2 },
+        .scale = { 2 * 10e-6, 2 * 10e-6, 2 * 10e-6 },
         .textureIndex = 0,
         .shadow = false
     };
 
-    player2Text[0] = (struct instance){
+    player2Text[0] = (struct myInstance){
         .pos = { 0.0f, -0.35f, 0.0f },
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
-        .scale = { 2 * 10e-2, 2 * 10e-2, 2 * 10e-2 },
+        .scale = { 2 * 10e-6, 2 * 10e-6, 2 * 10e-6 },
         .textureIndex = 0,
         .shadow = false
     };
 
-    background[0] = (struct instance){
+    background[0] = (struct myInstance){
         .pos = { 0.0f, 0.0f, 0.0f }, 
         .rotation = { 0.0f, glm_rad(0.3), 0.0f },
         .fixedRotation = { glm_rad(90), 0.0f, 0.0f },
@@ -435,7 +536,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    flat[0] = (struct instance){
+    flat[0] = (struct myInstance){
         .pos = { 0.0f, 0.0f, 0.0f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
@@ -444,7 +545,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    red[0] = (struct instance){
+    red[0] = (struct myInstance){
         .pos = { 0.0f, 0.0f, 0.0f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
@@ -453,7 +554,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    redBg[0] = (struct instance){
+    redBg[0] = (struct myInstance){
         .pos = { 0.0f, 0.0f, 0.0f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
@@ -462,7 +563,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    blue[0] = (struct instance){
+    blue[0] = (struct myInstance){
         .pos = { 0.0f, 0.0f, 0.0f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
@@ -471,7 +572,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    blueBg[0] = (struct instance){
+    blueBg[0] = (struct myInstance){
         .pos = { 0.0f, 0.0f, 0.0f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
@@ -480,7 +581,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    ring[0] = (struct instance) {
+    ring[0] = (struct myInstance) {
         .pos = { -11.0f, 0.0f, 0.5f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
@@ -489,7 +590,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    ring[1] = (struct instance) {
+    ring[1] = (struct myInstance) {
         .pos = { 11.0f, 0.0f, 0.5f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, 0.0f },
@@ -498,7 +599,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    ring[2] = (struct instance) {
+    ring[2] = (struct myInstance) {
         .pos = { 0.0f, 11.0f, 0.5f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, glm_rad(90) },
@@ -507,7 +608,7 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    ring[3] = (struct instance) {
+    ring[3] = (struct myInstance) {
         .pos = { 0.0f, -11.0f, 0.5f }, 
         .rotation = { 0.0f, 0.0f, 0.0f },
         .fixedRotation = { 0.0f, 0.0f, glm_rad(90) },
@@ -516,39 +617,39 @@ static void createScreens(struct EngineCore *engine) {
         .shadow = false
     };
 
-    addResource(&engine->resource, "ScreenData", screenData, cleanupResourceManager);
+    addResource(&engine->resource, SCREEN_DATA, screenData, cleanupResourceManager);
 }
 
 void createPlayerStructs(struct EngineCore *engine) {
-    struct ResourceManager *modelData = findResource(&engine->resource, "modelData");
-    struct ResourceManager *entityData = findResource(&engine->resource, "Entity");
-    struct ResourceManager *screenData = findResource(&engine->resource, "ScreenData");
+    struct player *playerData = malloc(sizeof(struct player[2]));
+
+    struct ResourceManager *modelData = findResource(&engine->resource, MODEL_DATA);
+    struct ResourceManager *entityData = findResource(&engine->resource, ENTITY);
+    struct ResourceManager *screenData = findResource(&engine->resource, SCREEN_DATA);
 
     struct renderPassObj *renderPass[] = {
-        findResource(screenData, "Left Screen"),
-        findResource(screenData, "Right Screen"),
-        findResource(screenData, "Background Left 1"),
-        findResource(screenData, "Background Right 1"),
-        findResource(screenData, "Middle Text"),
-        findResource(screenData, "Left Figure"),
-        findResource(screenData, "Right Figure"),
-        findResource(screenData, "Left Text"),
-        findResource(screenData, "Right Text"),
-        findResource(screenData, "Background Left 2"),
-        findResource(screenData, "Background Left 3"),
-        findResource(screenData, "Background Left 4"),
-        findResource(screenData, "Background Left 5"),
-        findResource(screenData, "Background Right 2"),
-        findResource(screenData, "Background Right 3"),
-        findResource(screenData, "Background Right 4"),
-        findResource(screenData, "Background Right 5"),
+        findResource(screenData, SCREEN_LEFT),
+        findResource(screenData, SCREEN_RIGHT),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_1),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_1),
+        findResource(screenData, SCREEN_MIDDLE_TEXT),
+        findResource(screenData, SCREEN_LEFT_FIGURE),
+        findResource(screenData, SCREEN_RIGHT_FIGURE),
+        findResource(screenData, SCREEN_LEFT_TEXT),
+        findResource(screenData, SCREEN_RIGHT_TEXT),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_2),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_3),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_4),
+        findResource(screenData, SCREEN_BACKGROUND_LEFT_5),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_2),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_3),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_4),
+        findResource(screenData, SCREEN_BACKGROUND_RIGHT_5),
     };
 
-    addResource(&engine->resource, "actualPlayerData", malloc(sizeof(struct player[2])), free);
-    struct player *playerData = findResource(&engine->resource, "actualPlayerData");
     playerData[0] = (struct player){
-        .model = findResource(entityData, "Player 1"),
-        .actualModel = findResource(modelData, "player"),
+        .entity = findResource(entityData, ENTITY_PLAYER_1),
+        .model = findResource(modelData, MODEL_PLAYER),
         .enemy = &playerData[1],
         .playerKeys = {
             GLFW_KEY_W,
@@ -572,17 +673,13 @@ void createPlayerStructs(struct EngineCore *engine) {
         .currentRest = 10000,
         .restPercentage = &renderPass[12]->coordinates[2],
 
-        .splitScreen = &renderPass[0]->camera,
-        .face = &renderPass[5]->camera,
-        .relativeFaceCameraPos = {
-            -1,
-            0.4,
-            2,
-        }
+        .splitScreen = renderPass[0]->camera,
+        .face = renderPass[5]->camera,
+        .relativeFaceCameraPos = { -1, 0.4, 2 }
     };
     playerData[1] = (struct player){
-        .model = findResource(entityData, "Player 2"),
-        .actualModel = findResource(modelData, "player"),
+        .entity = findResource(entityData, ENTITY_PLAYER_2),
+        .model = findResource(modelData, MODEL_PLAYER),
         .enemy = &playerData[0],
         .playerKeys = {
             GLFW_KEY_UP,
@@ -605,14 +702,12 @@ void createPlayerStructs(struct EngineCore *engine) {
         .currentRest = 10000,
         .restPercentage = &renderPass[16]->coordinates[2],
 
-        .splitScreen = &renderPass[1]->camera,
-        .face = &renderPass[6]->camera,
-        .relativeFaceCameraPos = {
-            1,
-            0.4,
-            2,
-        }
+        .splitScreen = renderPass[1]->camera,
+        .face = renderPass[6]->camera,
+        .relativeFaceCameraPos = { 1, 0.4, 2 }
     };
+
+    addResource(&engine->resource, PLAYER_DATA, playerData, free);
 }
 
 void loadGame(struct EngineCore *engine, enum state *state) {

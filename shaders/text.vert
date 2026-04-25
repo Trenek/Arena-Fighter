@@ -10,7 +10,7 @@ layout(location = 1) out vec2 fragBezzier;
 layout(location = 2) out flat uint fragInOut;
 layout(location = 3) out flat uint shadow;
 
-layout(set = 2, binding = 0) readonly uniform UniformBufferObject {
+layout(set = 1, binding = 0) readonly uniform UniformBufferObject {
     mat4 view;
     mat4 proj;
 } ubo;
@@ -36,7 +36,12 @@ layout(push_constant) uniform constants {
 
 void main() {
     //gl_Position = mesh.localModel[PushConstants.meshID] * vec4(inPosition, 1.0);
-    gl_Position = ubo.proj * ubo.view * instance.objects[gl_InstanceIndex].model * mesh.localModel[PushConstants.meshID] * vec4(inPosition, 0.0, 1.0);
+    gl_Position = vec4((
+        ubo.proj *
+        instance.objects[gl_InstanceIndex].model * 
+        mesh.localModel[PushConstants.meshID] * 
+        vec4(inPosition.xy, 0.0, 1.0)
+    ).xy, 0.0, 1.0);
 
     fragColor = inColor;
     fragBezzier = inBezzier;
