@@ -8,6 +8,7 @@ enum GameEnum {
     ENTITY,
     SOUND_MANAGER,
     SCREEN_DATA,
+    COMMAND_QUEUE,
     PLAYER_DATA,
     PLAYER_INFO,
     PLAYER_NAME,
@@ -86,4 +87,6 @@ enum GameEnum {
     SCREEN_LEFT_TEXT,
     SCREEN_RIGHT_TEXT,
     SCREEN_NOTHING,
+
+    COMMAND_QUEUE_GRAPHICS = 0,
 };

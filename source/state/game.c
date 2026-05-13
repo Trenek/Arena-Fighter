@@ -10,6 +10,7 @@
 
 #include "graphicsPipelineObj.h"
 #include "renderPassObj.h"
+#include "commandQueue.h"
 
 #include "player.h"
 
@@ -19,6 +20,7 @@ void game(struct EngineCore *engine, enum state *state) {
     struct ResourceManager *entityData = findResource(&engine->resource, ENTITY);
     struct ResourceManager *screenData = findResource(&engine->resource, SCREEN_DATA);
     struct SoundManager *soundManager = findResource(&engine->resource, SOUND_MANAGER);
+    struct ResourceManager *commandQueue = findResource(&engine->resource, COMMAND_QUEUE);
 
     struct Entity *entity[] = {
         findResource(entityData, ENTITY_FLOOR),
@@ -73,6 +75,12 @@ void game(struct EngineCore *engine, enum state *state) {
     struct playerInstance *enemy = entity[2]->instance;
     struct myInstance *text = entity[3]->instance;
 
+    struct CommandQueue *graphics = findResource(commandQueue, COMMAND_QUEUE_GRAPHICS);
+    struct CommandQueue *queue[] = {
+        graphics,
+    };
+    size_t qQueue = sizeof(queue) / sizeof(struct CommandQueue *);
+
     stopPrevSound(soundManager);
     playSound(soundManager, 1, true, 1.0f);
 
@@ -84,14 +92,27 @@ void game(struct EngineCore *engine, enum state *state) {
         movePlayer(&playerData[0], &engine->window, engine->deltaTime.deltaTime, state);
         movePlayer(&playerData[1], &engine->window, engine->deltaTime.deltaTime, state);
 
-        drawFrame(engine, qRenderPass, renderPass, qRenderPassArr, renderPassArr);
+        engineUpdate(engine, qRenderPass, renderPass);
+        
+        aquireNextImage(engine, graphics->inFlightFence, graphics->semaphore);
+
+        queueDraw(graphics, engine, qRenderPass, renderPass, 1, 
+            (VkSemaphore []) {
+                graphics->semaphore[engine->currentFrame],
+            },
+            (VkPipelineStageFlags []) {
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            }
+        );
+
+        presentFrame(engine, qRenderPassArr, renderPassArr, qQueue, queue);
 
         bool isMClicked = (KEY_PRESS | KEY_CHANGE) == getKeyState(&engine->window, GLFW_KEY_M);
         bool isPClicked = (KEY_PRESS | KEY_CHANGE) == getKeyState(&engine->window, GLFW_KEY_P);
 
         if (isMClicked) text->shadow = !text->shadow;
         if (isPClicked) *state = PAUSE;
-        if (playerData[0].currentHealth <= 0 || playerData[1].currentHealth <= 0) {
+        if (playerData[0].isDead || playerData[1].isDead) {
             *state = WIN_SCREEN;
         }
     }

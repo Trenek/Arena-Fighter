@@ -26,6 +26,7 @@ struct player {
     bool didHit;
     float hitTime;
     float hurtTime;
+    bool isDead;
 
     float time;
     int state;
@@ -50,6 +51,8 @@ enum animation {
     WALK,
 
     FAST_WALK,
+    // TODO - Add Dead state
+    DEAD = CHARGE,
 };
 
 struct WindowManager;

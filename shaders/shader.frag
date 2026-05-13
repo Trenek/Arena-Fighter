@@ -25,7 +25,7 @@ struct Materials {
     uint pad0;
 };
 
-layout(std140, set = 0, binding = 3) readonly buffer ObjectBuffer{
+layout(std140, set = 2, binding = 3) readonly buffer ObjectBuffer{
 	Materials nr[];
 } material;
 

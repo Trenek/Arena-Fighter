@@ -12,6 +12,7 @@
 
 #include "graphicsPipelineObj.h"
 #include "renderPassObj.h"
+#include "descriptorSetLayoutObj.h"
 
 #include "player.h"
 
@@ -25,7 +26,7 @@ static void createScreens(struct EngineCore *engine) {
     struct ResourceManager *renderPassCoreData = findResource(&engine->resource, RENDER_PASS_CORE);
     struct ResourceManager *textureData = findResource(&engine->resource, TEXTURE);
 
-    struct graphicsPipeline *pipe[] = { 
+    struct Pipeline *pipe[] = { 
         findResource(graphicPipelineData, GRAPHIC_PIPELINE_GLTF_FLOOR),
         findResource(graphicPipelineData, GRAPHIC_PIPELINE_PLAYER),
         findResource(graphicPipelineData, GRAPHIC_PIPELINE_FONT),
@@ -61,7 +62,7 @@ static void createScreens(struct EngineCore *engine) {
     addResource(screenData, SCREEN_LEFT, createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0, 0.0, 0.5, 1.0 },
             .renderPass = clean,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[0],
@@ -85,11 +86,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 3,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -97,7 +96,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.5, 0.0, 0.5, 1.0 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[0],
@@ -121,11 +120,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 3,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -133,7 +130,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0 / 8, 0.0 / 8, 2.0 / 8, 1.0 / 8 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -142,11 +139,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -154,7 +149,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 0.0 / 8, 2.0 / 8, 1.0 / 8 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -163,11 +158,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -175,7 +168,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0, 0.0, 1.0, 1.0 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .pipe = pipe[2],
                     .entity = (struct Entity* []) {
@@ -185,11 +178,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateFirstPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myFirstPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -197,7 +188,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0 / 8, 0.0 / 8, 1.0 / 8, 1.0 / 8 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &texture->descriptor,
                     .pipe = pipe[1],
@@ -206,11 +197,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -218,7 +207,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 7.0 / 8, 0.0 / 8, 1.0 / 8, 1.0 / 8 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &texture->descriptor,
                     .pipe = pipe[1],
@@ -227,11 +216,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -239,7 +226,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0 / 8, 0.0 / 8, 1.0 / 8, 1.0 / 8 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .pipe = pipe[2],
                     .entity = (struct Entity* []) {
@@ -249,11 +236,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateFirstPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myFirstPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -261,7 +246,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 7.0 / 8, 0.0 / 8, 1.0 / 8, 1.0 / 8 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .pipe = pipe[2],
                     .entity = (struct Entity* []) {
@@ -271,11 +256,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateFirstPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myFirstPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -283,7 +266,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 1.0 / 8, 2.0 / 80, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -292,11 +275,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -304,7 +285,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 1.0 / 8, 6.0 / 90, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -313,11 +294,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -325,7 +304,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 1.0 / 8, 2.0 / 80, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -334,11 +313,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -346,7 +323,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 1.0 / 8, 6.0 / 90, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -355,11 +332,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -367,7 +342,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 2.0 / 80, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -376,11 +351,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -388,7 +361,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 6.0 / 90, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -397,11 +370,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -409,7 +380,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 2.0 / 80, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -418,11 +389,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -430,7 +399,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 6.0 / 8, 6.0 / 90, 1.0 / 8, 3.0 / 80 },
             .renderPass = stay,
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .texture = &colorTexture->descriptor,
                     .pipe = pipe[4],
@@ -439,11 +408,9 @@ static void createScreens(struct EngineCore *engine) {
                 },
             },
             .qData = 1,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myThirdPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );
@@ -451,11 +418,7 @@ static void createScreens(struct EngineCore *engine) {
         createRenderPassObj((struct renderPassBuilder){
             .coordinates = { 0.0, 0.0, 1.0, 1.0 },
             .renderPass = stay,
-            .updateCameraBuffer = myUpdateThirdPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
-            .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
         destroyRenderPassObj
     );

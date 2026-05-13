@@ -13,6 +13,8 @@
 
 #include "graphicsPipelineObj.h"
 #include "renderPassObj.h"
+#include "descriptorSetLayoutObj.h"
+#include "commandQueue.h"
 
 #include "player.h"
 
@@ -26,8 +28,9 @@ void menu(struct EngineCore *engine, enum state *state) {
     struct ResourceManager *modelData = findResource(&engine->resource, MODEL_DATA);
     struct ResourceManager *textureData = findResource(&engine->resource, TEXTURE);
     struct SoundManager *soundManager = findResource(&engine->resource, SOUND_MANAGER);
+    struct ResourceManager *commandQueue = findResource(&engine->resource, COMMAND_QUEUE);
 
-    struct graphicsPipeline *pipe[] = {
+    struct Pipeline *pipe[] = {
         findResource(graphicsPipelineData, GRAPHIC_PIPELINE_FONT),
         findResource(graphicsPipelineData, GRAPHIC_PIPELINE_REC_BUTTON),
         findResource(graphicsPipelineData, GRAPHIC_PIPELINE_SKYBOX),
@@ -54,11 +57,17 @@ void menu(struct EngineCore *engine, enum state *state) {
 
     struct descriptorSetLayout *cameraLayout = findResource(findResource(&engine->resource, OBJECT_LAYOUT), OBJECT_LAYOUT_CAMERA);
 
+    struct CommandQueue *graphics = findResource(commandQueue, COMMAND_QUEUE_GRAPHICS);
+    struct CommandQueue *queue[] = {
+        graphics,
+    };
+    size_t qQueue = sizeof(queue) / sizeof(struct CommandQueue *);
+
     struct renderPassObj *renderPass[] = {
         createRenderPassObj((struct renderPassBuilder){
             .renderPass = renderPassArr[0],
             .coordinates = { 0.0, 0.0, 1.0, 1.0 },
-            .data = (struct pipelineConnection[]) {
+            .data = (struct pipelineConnectionBuilder[]) {
                 {
                     .pipe = pipe[0],
                     .entity = (struct Entity* []) {
@@ -82,11 +91,9 @@ void menu(struct EngineCore *engine, enum state *state) {
                 }
             },
             .qData = 3,
-            .updateCameraBuffer = myUpdateFirstPersonCameraBuffer,
-            .cameraSize = sizeof(struct camera),
-            .cameraBufferSize = sizeof(struct CameraBuffer),
-            .camera = &(struct camera){},
+            .camera = myFirstPersonCameraInfo(&(struct camera) {}),
             .cameraDescriptorSetLayout = cameraLayout->descriptorSetLayout,
+            .drawRenderPass = drawRenderPass,
         }, &engine->graphics),
     };
     size_t qRenderPass = sizeof(renderPass) / sizeof(struct renderPassObj *);
@@ -182,7 +189,20 @@ void menu(struct EngineCore *engine, enum state *state) {
 
         updateMyInstances(entity, qEntity, engine->deltaTime.deltaTime);
 
-        drawFrame(engine, qRenderPass, renderPass, qRenderPassArr, renderPassArr);
+        engineUpdate(engine, qRenderPass, renderPass);
+        
+        aquireNextImage(engine, graphics->inFlightFence, graphics->semaphore);
+
+        queueDraw(graphics, engine, qRenderPass, renderPass, 1, 
+            (VkSemaphore []) {
+                graphics->semaphore[engine->currentFrame],
+            },
+            (VkPipelineStageFlags []) {
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            }
+        );
+
+        presentFrame(engine, qRenderPassArr, renderPassArr, qQueue, queue);
         shadowButton(engine->graphics, engine->window, &button);
         if (button.isClicked) {
             *state = button.newState[button.chosen];

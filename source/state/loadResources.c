@@ -22,8 +22,8 @@
 
 #include "graphicsPipelineObj.h"
 #include "graphicsPipelineLayout.h"
-
-#include "Vertex.h"
+#include "descriptorSetLayoutObj.h"
+#include "commandQueue.h"
 
 #include "gameEnum.h"
 
@@ -126,8 +126,8 @@ static void createGraphicPipelineLayouts(struct EngineCore *this) {
 
     addResource(graphicPipelinesData, GRAPHIC_PIPELINE_LAYOUT_FONT, createGraphicPipelineLayout((struct graphicsPipelineLayoutBuilder) {
         .descriptorSetLayout = (VkDescriptorSetLayout []){
-            fontLayout->descriptorSetLayout,
             cameraLayout->descriptorSetLayout,
+            fontLayout->descriptorSetLayout,
         },
         .qDescriptorSetLayout = 2,
 
@@ -139,28 +139,28 @@ static void createGraphicPipelineLayouts(struct EngineCore *this) {
                 .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
             }
         }
-    }, &this->graphics), destroyObjGraphicsPipelineLayout);
+    }, &this->graphics), destroyPipelineLayoutObj);
     addResource(graphicPipelinesData, GRAPHIC_PIPELINE_LAYOUT_REC_BUTTON, createGraphicPipelineLayout((struct graphicsPipelineLayoutBuilder) {
         .descriptorSetLayout = (VkDescriptorSetLayout []){
-            recLayout->descriptorSetLayout,
-            texture->descriptor.descriptorSetLayout,
             cameraLayout->descriptorSetLayout,
+            texture->descriptor.descriptorSetLayout,
+            recLayout->descriptorSetLayout,
         },
         .qDescriptorSetLayout = 3,
-    }, &this->graphics), destroyObjGraphicsPipelineLayout);
+    }, &this->graphics), destroyPipelineLayoutObj);
     addResource(graphicPipelinesData, GRAPHIC_PIPELINE_LAYOUT_REC, createGraphicPipelineLayout((struct graphicsPipelineLayoutBuilder) {
         .descriptorSetLayout = (VkDescriptorSetLayout []){
-            recLayout->descriptorSetLayout,
-            colorTexture->descriptor.descriptorSetLayout,
             cameraLayout->descriptorSetLayout,
+            colorTexture->descriptor.descriptorSetLayout,
+            recLayout->descriptorSetLayout,
         },
         .qDescriptorSetLayout = 3,
-    }, &this->graphics), destroyObjGraphicsPipelineLayout);
+    }, &this->graphics), destroyPipelineLayoutObj);
     addResource(graphicPipelinesData, GRAPHIC_PIPELINE_LAYOUT_OBJ_CUBEMAP, createGraphicPipelineLayout((struct graphicsPipelineLayoutBuilder) {
         .descriptorSetLayout = (VkDescriptorSetLayout []){
-            objLayout->descriptorSetLayout,
-            cubeMap->descriptor.descriptorSetLayout,
             cameraLayout->descriptorSetLayout,
+            cubeMap->descriptor.descriptorSetLayout,
+            objLayout->descriptorSetLayout,
         },
         .qDescriptorSetLayout = 3,
 
@@ -172,12 +172,12 @@ static void createGraphicPipelineLayouts(struct EngineCore *this) {
                 .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
             }
         }
-    }, &this->graphics), destroyObjGraphicsPipelineLayout);
+    }, &this->graphics), destroyPipelineLayoutObj);
     addResource(graphicPipelinesData, GRAPHIC_PIPELINE_LAYOUT_GLTF, createGraphicPipelineLayout((struct graphicsPipelineLayoutBuilder) {
         .descriptorSetLayout = (VkDescriptorSetLayout []){
-            gltfLayout->descriptorSetLayout,
-            texture->descriptor.descriptorSetLayout,
             cameraLayout->descriptorSetLayout,
+            texture->descriptor.descriptorSetLayout,
+            gltfLayout->descriptorSetLayout,
         },
         .qDescriptorSetLayout = 3,
 
@@ -189,12 +189,12 @@ static void createGraphicPipelineLayouts(struct EngineCore *this) {
                 .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
             }
         }
-    }, &this->graphics), destroyObjGraphicsPipelineLayout);
+    }, &this->graphics), destroyPipelineLayoutObj);
     addResource(graphicPipelinesData, GRAPHIC_PIPELINE_LAYOUT_GLTF_FLOOR, createGraphicPipelineLayout((struct graphicsPipelineLayoutBuilder) {
         .descriptorSetLayout = (VkDescriptorSetLayout []){
-            gltfLayout->descriptorSetLayout,
-            colorTexture->descriptor.descriptorSetLayout,
             cameraLayout->descriptorSetLayout,
+            colorTexture->descriptor.descriptorSetLayout,
+            gltfLayout->descriptorSetLayout,
         },
         .qDescriptorSetLayout = 3,
 
@@ -206,7 +206,7 @@ static void createGraphicPipelineLayouts(struct EngineCore *this) {
                 .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
             }
         }
-    }, &this->graphics), destroyObjGraphicsPipelineLayout);
+    }, &this->graphics), destroyPipelineLayoutObj);
 
     addResource(&this->resource, GRAPHIC_PIPELINE_LAYOUTS, graphicPipelinesData, cleanupResourceManager);
 }
@@ -229,7 +229,7 @@ static void createGraphicPipelines(struct EngineCore *this) {
     struct graphicsPipelineLayout *gltfLayout = findResource(graphicPipelineLayout, GRAPHIC_PIPELINE_LAYOUT_GLTF);
     struct graphicsPipelineLayout *floorLayout = findResource(graphicPipelineLayout, GRAPHIC_PIPELINE_LAYOUT_GLTF_FLOOR);
 
-    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_FONT, createObjGraphicsPipeline((struct graphicsPipelineBuilder) {
+    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_FONT, createGraphicsPipelineObj((struct GraphicsPipelineBuilder) {
         .pipelineLayout = fontLayout->pipelineLayout,
         .qRenderPassCore = qRenderPass,
         .renderPassCore = renderPass,
@@ -239,11 +239,11 @@ static void createGraphicPipelines(struct EngineCore *this) {
         .maxDepth = 1.0f,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 
-        Vert(FontVertex),
+        .vert = defaultFontVert(),
         .operation = VK_COMPARE_OP_LESS,
         .cullFlags = VK_CULL_MODE_BACK_BIT,
-    }, &this->graphics), destroyObjGraphicsPipeline);
-    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_REC_BUTTON, createObjGraphicsPipeline((struct graphicsPipelineBuilder) {
+    }, &this->graphics), destroyPipelineObj);
+    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_REC_BUTTON, createGraphicsPipelineObj((struct GraphicsPipelineBuilder) {
         .pipelineLayout = buttonLayout->pipelineLayout,
         .qRenderPassCore = qRenderPass,
         .renderPassCore = renderPass,
@@ -253,11 +253,11 @@ static void createGraphicPipelines(struct EngineCore *this) {
         .maxDepth = 1.0f,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 
-        Vert(RecVertex),
+        .vert = defaultRectVert(),
         .operation = VK_COMPARE_OP_LESS,
         .cullFlags = VK_CULL_MODE_NONE,
-    }, &this->graphics), destroyObjGraphicsPipeline);
-    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_REC, createObjGraphicsPipeline((struct graphicsPipelineBuilder) {
+    }, &this->graphics), destroyPipelineObj);
+    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_REC, createGraphicsPipelineObj((struct GraphicsPipelineBuilder) {
         .pipelineLayout = recLayout->pipelineLayout,
         .qRenderPassCore = qRenderPass,
         .renderPassCore = renderPass,
@@ -267,11 +267,11 @@ static void createGraphicPipelines(struct EngineCore *this) {
         .maxDepth = 1.0f,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 
-        Vert(RecVertex),
+        .vert = defaultRectVert(),
         .operation = VK_COMPARE_OP_LESS,
         .cullFlags = VK_CULL_MODE_NONE,
-    }, &this->graphics), destroyObjGraphicsPipeline);
-    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_SKYBOX, createObjGraphicsPipeline((struct graphicsPipelineBuilder) {
+    }, &this->graphics), destroyPipelineObj);
+    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_SKYBOX, createGraphicsPipelineObj((struct GraphicsPipelineBuilder) {
         .pipelineLayout = cubemapLayout->pipelineLayout,
         .qRenderPassCore = qRenderPass,
         .renderPassCore = renderPass,
@@ -281,11 +281,11 @@ static void createGraphicPipelines(struct EngineCore *this) {
         .maxDepth = 1.0f,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 
-        Vert(ObjVertex),
+        .vert = defaultObjVert(),
         .operation = VK_COMPARE_OP_LESS_OR_EQUAL,
         .cullFlags = VK_CULL_MODE_BACK_BIT,
-    }, &this->graphics), destroyObjGraphicsPipeline);
-    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_PLAYER, createObjGraphicsPipeline((struct graphicsPipelineBuilder) {
+    }, &this->graphics), destroyPipelineObj);
+    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_PLAYER, createGraphicsPipelineObj((struct GraphicsPipelineBuilder) {
         .pipelineLayout = gltfLayout->pipelineLayout,
         .qRenderPassCore = qRenderPass,
         .renderPassCore = renderPass,
@@ -295,11 +295,11 @@ static void createGraphicPipelines(struct EngineCore *this) {
         .maxDepth = 1.0f,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 
-        Vert(GltfVertex),
+        .vert = defaultGltfVert(),
         .operation = VK_COMPARE_OP_LESS,
         .cullFlags = VK_CULL_MODE_BACK_BIT,
-    }, &this->graphics), destroyObjGraphicsPipeline);
-    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_GLTF_FLOOR, createObjGraphicsPipeline((struct graphicsPipelineBuilder) {
+    }, &this->graphics), destroyPipelineObj);
+    addResource(graphicPipelinesData, GRAPHIC_PIPELINE_GLTF_FLOOR, createGraphicsPipelineObj((struct GraphicsPipelineBuilder) {
         .pipelineLayout = floorLayout->pipelineLayout,
         .qRenderPassCore = qRenderPass,
         .renderPassCore = renderPass,
@@ -309,10 +309,10 @@ static void createGraphicPipelines(struct EngineCore *this) {
         .maxDepth = 1.0f,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 
-        Vert(GltfVertex),
+        .vert = defaultGltfVert(),
         .operation = VK_COMPARE_OP_LESS,
         .cullFlags = VK_CULL_MODE_BACK_BIT,
-    }, &this->graphics), destroyObjGraphicsPipeline);
+    }, &this->graphics), destroyPipelineObj);
 
     addResource(&this->resource, GRAPHIC_PIPELINE, graphicPipelinesData, cleanupResourceManager);
 }
@@ -332,7 +332,7 @@ void addString(
         .modelData = findResource(modelData, MODEL_FONT),
         .objectLayout = objectLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
         .center = 0
     }, &this->graphics), destroyEntity);
 }
@@ -347,33 +347,33 @@ static void addEntities(struct EngineCore *this) {
     struct descriptorSetLayout *recLayout = findResource(objectData, OBJECT_LAYOUT_REC);
     struct descriptorSetLayout *fontLayout = findResource(objectData, OBJECT_LAYOUT_FONT);
 
-    addResource(entityData, ENTITY_FLAT, createRec((struct RecBuilder) {
+    addResource(entityData, ENTITY_FLAT, createInstancedRec((struct RecBuilder) {
         .instanceCount = 3,
         .modelData = findResource(modelData, MODEL_FLAT),
         .objectLayout = recLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
     addResource(entityData, ENTITY_FLOOR, createGltf((struct GltfBuilder) {
         .instanceCount = 1,
         .modelData = findResource(modelData, MODEL_FLOOR),
         .objectLayout = gltfLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
     addResource(entityData, ENTITY_CUBE, createGltf((struct GltfBuilder) {
         .instanceCount = 4,
         .modelData = findResource(modelData, MODEL_CUBE),
         .objectLayout = gltfLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
     addResource(entityData, ENTITY_BACKGROUND, createObj((struct ObjBuilder) {
         .instanceCount = 1,
         .modelData = findResource(modelData, MODEL_SKYBOX),
         .objectLayout = objLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
     addString(entityData, modelData, ENTITY_TEXT_MAIN_MENU, fontLayout, this, "Main Menu");
     addString(entityData, modelData, ENTITY_TEXT_RESTART, fontLayout, this, "Restart");
@@ -389,49 +389,49 @@ static void addEntities(struct EngineCore *this) {
         .modelData = findResource(modelData, MODEL_PLAYER),
         .objectLayout = gltfLayout->descriptorSetLayout,
 
-        INS(playerInstance, playerInstanceBuffer),
+        .instance = playerInstanceInfo(),
     }, &this->graphics), destroyEntity);
     addResource(entityData, ENTITY_PLAYER_2, createGltf((struct GltfBuilder) {
         .instanceCount = 1,
         .modelData = findResource(modelData, MODEL_PLAYER),
         .objectLayout = gltfLayout->descriptorSetLayout,
 
-        INS(playerInstance, playerInstanceBuffer),
+        .instance = playerInstanceInfo(),
     }, &this->graphics), destroyEntity);
-    addResource(entityData, ENTITY_BLUE_BACK, createRec((struct RecBuilder) {
+    addResource(entityData, ENTITY_BLUE_BACK, createInstancedRec((struct RecBuilder) {
         .instanceCount = 1,
         .modelData = findResource(modelData, MODEL_FLAT),
         .objectLayout = recLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
-    addResource(entityData, ENTITY_HEALTH, createRec((struct RecBuilder) {
+    addResource(entityData, ENTITY_HEALTH, createInstancedRec((struct RecBuilder) {
         .instanceCount = 1,
         .modelData = findResource(modelData, MODEL_FLAT),
         .objectLayout = recLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
-    addResource(entityData, ENTITY_HEALTH_BACKGROUND, createRec((struct RecBuilder) {
+    addResource(entityData, ENTITY_HEALTH_BACKGROUND, createInstancedRec((struct RecBuilder) {
         .instanceCount = 1,
         .modelData = findResource(modelData, MODEL_FLAT),
         .objectLayout = recLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
-    addResource(entityData, ENTITY_REST, createRec((struct RecBuilder) {
+    addResource(entityData, ENTITY_REST, createInstancedRec((struct RecBuilder) {
         .instanceCount = 1,
         .modelData = findResource(modelData, MODEL_FLAT),
         .objectLayout = recLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
-    addResource(entityData, ENTITY_REST_BACKGROUND, createRec((struct RecBuilder) {
+    addResource(entityData, ENTITY_REST_BACKGROUND, createInstancedRec((struct RecBuilder) {
         .instanceCount = 1,
         .modelData = findResource(modelData, MODEL_FLAT),
         .objectLayout = recLayout->descriptorSetLayout,
 
-        INS(myInstance, myInstanceBuffer),
+        .instance = myInstanceInfo(),
     }, &this->graphics), destroyEntity);
 
     addResource(&this->resource, ENTITY, entityData, cleanupResourceManager);
@@ -448,6 +448,14 @@ static void loadSounds(struct EngineCore *this) {
     addResource(&this->resource, SOUND_MANAGER, soundManager, cleanupSoundManager);
 }
 
+static void createCommandQueues(struct EngineCore *engine) {
+    struct ResourceManager *queueData = calloc(1, sizeof(struct ResourceManager));
+
+    addResource(queueData, COMMAND_QUEUE_GRAPHICS, createCommandQueue(&engine->graphics), destroyCommandQueue);
+
+    addResource(&engine->resource, COMMAND_QUEUE, queueData, cleanupResourceManager);
+}
+
 void loadResources(struct EngineCore *engine, enum state *state) {
     addTextures(engine);
     addModelData(engine);
@@ -460,6 +468,7 @@ void loadResources(struct EngineCore *engine, enum state *state) {
     addEntities(engine);
 
     loadSounds(engine);
+    createCommandQueues(engine);
 
     *state = MAIN_MENU;
 }

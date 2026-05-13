@@ -155,11 +155,11 @@ static void hitLock(struct player *p, float deltaTime) {
         }
 
         if (didColide && p->didHit == false) {
-            p->enemy->state = names[p->state].enemyState;
             p->enemy->currentHealth -= names[p->state].damage;
             p->didHit = didColide;
             p->enemy->hurtLock = true;
             p->enemy->hurtTime = 1;
+            p->enemy->state = p->enemy->currentHealth <= 0 ? DEAD : names[p->state].enemyState;
         }
         p->hitTime += deltaTime;
         p->time = MIN(p->hitTime, maxTime - 0.1);
@@ -371,6 +371,7 @@ void movePlayer(struct player *p, struct WindowManager *wc, float deltaTime, enu
         p->enemy->hurtLock = false;
         p->hitTime = 0;
         p->doesHitLast = false;
+        if (p->currentHealth <= 0) p->isDead = true;
 
         newMove(p, deltaTime, wal, displacement);
     }
